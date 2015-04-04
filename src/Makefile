@@ -1,6 +1,6 @@
 CC 	   ?= clang
 CFLAGS += -g -Wall -Wextra
-SRCS   := pcs.c djcs.c egcs.c
+SRCS   := pcs.c djcs.c egcs.c pcs2.c
 
 all: hcs
 

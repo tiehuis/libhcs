@@ -30,6 +30,8 @@ typedef struct {
  */
 typedef struct {
     mpz_t lambda;   /**< φ(p, q). p and q being the prime factors of n */
+    mpz_t alpha;
+    mpz_t g;
     mpz_t mu;       /**< Inverse of lambda mod n */
     mpz_t n;        /**< A random value composed of two large prime factors, p and q */
     mpz_t n2;       /**< n^2, cached for speed */

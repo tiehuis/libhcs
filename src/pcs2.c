@@ -4,6 +4,7 @@
  * @date 15 March 2015
  *
  * Implementation of the Paillier Cryptosystem (pcs2).
+ * This will currently implement a fast variant, with sub-cubic decryption.
  */
 
 #include <stdlib.h>
@@ -33,6 +34,8 @@ void pcs2_encrypt(pcs2_public_key *pk, mpz_t rop, mpz_t plain1)
 
     /* g^m * r^n mod n^2 = (g^m mod n^2) * (r^n mod n^2) mod n^2 */
     mpz_powm(t2, t2, pk->n, pk->n2);
+    mpz_mul(t2, pk->n, t2);
+    mpz_powm(t2, pk->g, t2, pk->n2);
     mpz_powm(rop, pk->g, plain1, pk->n2);
     mpz_mul(rop, rop, t2);
     mpz_mod(rop, rop, pk->n2);
@@ -43,11 +46,16 @@ void pcs2_encrypt(pcs2_public_key *pk, mpz_t rop, mpz_t plain1)
 
 void pcs2_decrypt(pcs2_private_key *vk, mpz_t rop, mpz_t cipher1)
 {
-    mpz_powm(rop, cipher1, vk->lambda, vk->n2);
+    mpz_t t1;
+    mpz_init(t1);
+    mpz_powm(rop, cipher1, vk->alpha, vk->n2);
     mpz_sub_ui(rop, rop, 1);
     mpz_tdiv_q(rop, rop, vk->n);
-    mpz_mul(rop, rop, vk->mu);
+
+    mpz_mul(rop, rop, vk->g);
     mpz_mod(rop, rop, vk->n);
+
+    mpz_clear(t1);
 }
 
 void pcs2_reencrypt(pcs2_public_key *pk, mpz_t rop, mpz_t op)
@@ -128,6 +136,8 @@ else {
     mpz_add_ui(q, q, 1);
     mpz_pow_ui(vk->n2, vk->n, 2);
 
+    //mpz_urandomm(vk->alpha, rstate, vk->lambda);
+
     /* Calculate public key fields */
     mpz_set(pk->n, vk->n);
     mpz_set(pk->n2, vk->n2);
@@ -155,6 +165,15 @@ else {
     mpz_add_ui(pk->g, pk->n, 1);
 }
 //#endif
+
+/* Choose alpha small so that g is contained in group, but small enough
+ * so decryption is now a quadratic */
+    mpz_mul_ui(vk->alpha, pk->g, 2);
+
+    mpz_powm(vk->g, pk->g, vk->alpha, vk->n2);
+    mpz_sub_ui(vk->g, vk->g, 1);
+    mpz_tdiv_q(vk->g, vk->g, vk->n);
+    mpz_invert(vk->g, vk->g, vk->n);
 
     gmp_randclear(rstate);
     mpz_clear(p); mpz_clear(q);
@@ -212,7 +231,7 @@ pcs2_private_key* pcs2_init_private_key(void)
 {
     pcs2_private_key *vk = malloc(sizeof(pcs2_private_key));
     if (!vk) return NULL;
-    mpz_inits(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_inits(vk->lambda, vk->alpha, vk->mu, vk->n, vk->n2, NULL);
     return vk;
 }
 
@@ -230,13 +249,13 @@ void pcs2_free_public_key(pcs2_public_key *pk)
 
 void pcs2_clear_private_key(pcs2_private_key *vk)
 {
-    mpz_zeros(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_zeros(vk->lambda, vk->alpha, vk->mu, vk->n, vk->n2, NULL);
 }
 
 void pcs2_free_private_key(pcs2_private_key *vk)
 {
     pcs2_clear_private_key(vk);
-    mpz_clears(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_clears(vk->lambda, vk->alpha, vk->mu, vk->n, vk->n2, NULL);
     free(vk);
 }
 

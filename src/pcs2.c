@@ -112,12 +112,10 @@ void pcs2_generate_key_pair(pcs2_public_key *pk, pcs2_private_key *vk, const uns
     mpz_seed(p, 256);
     gmp_randseed(rstate, p);
 
-    /* To generate n as 'bits' bits, we generate two primes of length bits/2 and take the
-     * product. This ensures that n is in the range [bits, bits+1]. We do not want p and q
-     * to be the same prime, so ensure they are not. This is very very unlikely as bits
-     * gets large. */
+    /* This fast variant also requires (p-1)*(q-1) to be a multiple of a prime */
+    //pcs2_generate_primes(p, q, rstate);
     do {
-        mpz_random_prime(p, rstate, 1 + (bits-1)/2);
+        mpz_random_dsa_prime(p, rstate, 1 + (bits-1)/2);
         mpz_random_prime(q, rstate, 1 + (bits-1)/2);
     } while (mpz_cmp(p, q) == 0);
 
@@ -126,13 +124,7 @@ void pcs2_generate_key_pair(pcs2_public_key *pk, pcs2_private_key *vk, const uns
     mpz_mul(vk->n, p, q);
     mpz_sub_ui(vk->lambda, p, 1);
     mpz_sub_ui(q, q, 1);
-
-if (option == 1) {
     mpz_lcm(vk->lambda, vk->lambda, q);
-}
-else {
-    mpz_mul(vk->lambda, vk->lambda, q);
-}
     mpz_add_ui(q, q, 1);
     mpz_pow_ui(vk->n2, vk->n, 2);
 

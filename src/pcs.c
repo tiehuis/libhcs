@@ -118,13 +118,7 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsign
     mpz_mul(vk->n, p, q);
     mpz_sub_ui(vk->lambda, p, 1);
     mpz_sub_ui(q, q, 1);
-
-if (option == 1) {
     mpz_lcm(vk->lambda, vk->lambda, q);
-}
-else {
-    mpz_mul(vk->lambda, vk->lambda, q);
-}
     mpz_add_ui(q, q, 1);
     mpz_pow_ui(vk->n2, vk->n, 2);
 

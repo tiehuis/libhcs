@@ -74,3 +74,47 @@ void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
     mpz_nextprime(rop, rop);
 }
 
+/* Generate a prime rop1 which is equal to 2 * rop2 + 1 where rop2 is also prime */
+void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+{
+    do {
+        mpz_random_prime(rop1, rstate, bitcnt);
+        mpz_sub_ui(rop2, rop1, 1);
+        mpz_divexact_ui(rop1, rop1, 2);
+    } while (mpz_probab_prime_p(rop1, 25) == 0);
+}
+
+static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
+{
+    mpz_t p, t, l, r, temp;
+    mpz_init(r);
+    mpz_init(temp);
+    mpz_init_set_ui(t, 2 * 29);
+    mpz_init_set_str(p, "6 649 693 230", 10); // 2 * 3 * 5 * 7 ... * 29
+    mpz_set_ui(c, 0);
+
+    size_t seqlen = mpz_sizeinbase(alpha);
+    mpz_init_set_ui(l, seqlen);
+    mpz_sub(l, l, t);
+    assert(mpz_cmp_ui(l, 0) > 0);
+
+    for (int i = 0; i < 10; ++i) {
+        do {
+            mpz_urandomm(r, rstate, l);
+            mpz_tdiv_q_2exp(r, r, mpz_get_ui(r));
+            mpz_and(r, r, t);
+            mpz_mod(temp, r, p);
+        } while (mpz_cmp_ui(temp, 0) == 0);
+
+        mpz_add(c, r);
+        mpz_mod(c, p);
+    }
+
+    mpz_clears(p, t, l, r, temp, NULL);
+}
+
+void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+{
+    mpz_random_prime(rop, rstate, 160);
+}
+

@@ -13,13 +13,11 @@
     mpz_t a, b;\
     mpz_inits(a, b, NULL);\
     mpz_set_ui(a, 1000);\
-    CRYPTO##_encrypt(pk, a, a);\
+    /*CRYPTO##_encrypt(pk, a, a);*/\
 timing_begin()\
     for (int i = 0; i < 100; ++i)\
-        CRYPTO##_decrypt(vk, b, a);\
-timing_end(\
-    gmp_printf("%Zd\n", b);\
-    )\
+        CRYPTO##_encrypt(pk, b, a);\
+timing_end()\
     CRYPTO##_free_public_key(pk);\
     CRYPTO##_free_private_key(vk);\
     mpz_clears(a, b, NULL);\

@@ -84,6 +84,7 @@ void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bi
     } while (mpz_probab_prime_p(rop1, 25) == 0);
 }
 
+/* Internal helper function for dsa_prime generation */
 static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
 {
     mpz_t p, t, l, r, temp;
@@ -93,10 +94,9 @@ static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
     mpz_init_set_str(p, "6 649 693 230", 10); // 2 * 3 * 5 * 7 ... * 29
     mpz_set_ui(c, 0);
 
-    size_t seqlen = mpz_sizeinbase(alpha);
+    size_t seqlen = mpz_sizeinbase(alpha, 2);
     mpz_init_set_ui(l, seqlen);
     mpz_sub(l, l, t);
-    assert(mpz_cmp_ui(l, 0) > 0);
 
     for (int i = 0; i < 10; ++i) {
         do {
@@ -106,15 +106,35 @@ static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
             mpz_mod(temp, r, p);
         } while (mpz_cmp_ui(temp, 0) == 0);
 
-        mpz_add(c, r);
-        mpz_mod(c, p);
+        mpz_add(c, c, r);
+        mpz_mod(c, c, p);
     }
 
     mpz_clears(p, t, l, r, temp, NULL);
 }
 
+/* Generate a random dsa_prime and set rop to the result */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
     mpz_random_prime(rop, rstate, 160);
 }
 
+/* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike other
+ * mpz functions rop must not be an aliased with any of the other arguments!
+ * This is done to save excessive copying in this function, plus it is usually
+ * not beneficial as conX_a and conX_m cannot be the same value anyway */
+void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
+{
+    mpz_t t;
+    mpz_init(t);
+
+    mpz_invert(rop, con2_m, con1_m);
+    mpz_mul(rop, rop, con2_m);
+    mpz_mul(rop, rop, con1_a);
+    mpz_invert(t, con1_m, con2_m);
+    mpz_mul(t, t, con1_m);
+    mpz_mul(t, t, con2_a);
+    mpz_add(rop, rop, t);
+
+    mpz_clear(t);
+}

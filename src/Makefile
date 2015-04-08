@@ -1,4 +1,4 @@
-CC 	   ?= clang
+CC 	   := clang
 CFLAGS += -g -Wall -Wextra
 SRCS   := pcs.c djcs.c egcs.c pcs2.c
 

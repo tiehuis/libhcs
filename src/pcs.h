@@ -16,23 +16,32 @@
 extern "C" {
 #endif
 
+/** The number of bits gathered for seeding the prng */
+#define PCS_SEED_BITS 256
+
 /**
  * @brief The type for a public key, for use with the Paillier system
  */
 typedef struct {
-    mpz_t n;        /**< The modulus size of the key. */
-    mpz_t g;        /**< n + 1, cached for speed */
-    mpz_t n2;       /**< n^2, cached for speed */
+    mpz_t n;        /**< Modulus of the key. n = p * q */
+    mpz_t g;        /**< Precomputation: n + 1 usually, may be 2*/
+    mpz_t n2;       /**< Precomputation: n^2 */
 } pcs_public_key;
 
 /**
  * @brief The type for a private key, for use with the Paillier system.
  */
 typedef struct {
-    mpz_t lambda;   /**< φ(p, q). p and q being the prime factors of n */
-    mpz_t mu;       /**< Inverse of lambda mod n */
-    mpz_t n;        /**< A random value composed of two large prime factors, p and q */
-    mpz_t n2;       /**< n^2, cached for speed */
+    mpz_t p;        /**< A random prime determined during key generation */
+    mpz_t q;        /**< A random prime determined during key generation */
+    mpz_t p2;       /**< Precomputation: p^2 */
+    mpz_t q2;       /**< Precomputation: q^2 */
+    mpz_t hp;       /**< Precomputation: L_p(g^{p-1} mod p^2)^{-1} mod p */
+    mpz_t hq;       /**< Precomputation: L_p(g^{q-1} mod q^2)^{-1} mod q */
+    mpz_t lambda;   /**< Precomputation: euler-phi(p, q) */
+    mpz_t mu;       /**< Precomputation: lambda^{-1} mod n */
+    mpz_t n;        /**< Modulus of the key: p * q */
+    mpz_t n2;       /**< Precomputation: n^2 */
 } pcs_private_key;
 
 /**
@@ -55,7 +64,7 @@ typedef struct {
  * @param vk An initialised pointer to a pcs_private_key.
  * @param bits The required number of bits the modulus n will be.
  */
-void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits, int option);
+void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits);
 
 /**
  * @brief Encrypt a plaintext value and set @p rop to the encrypted result.

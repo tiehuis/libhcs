@@ -25,6 +25,5 @@ timing_end()\
 
 int main(void)
 {
-    init_scheme(pcs2);
     init_scheme(pcs);
 }

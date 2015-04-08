@@ -1,17 +1,20 @@
 CC	    ?= clang
-CFLAGS  += -g -Wall -Wextra -I../src/ -L../lib/ -Wl,-rpath=../lib/
+CFLAGS  += -g -Wall -Wextra -I../src/ -L../lib/ -Wl,-rpath=../lib/ -std=c99
 LDFLAGS += -lgmp -lhcs
 
-all: test_base test_negative voting
+all: voting sanity
 
 voting: voting.c
 	$(CC) $(CFLAGS) voting.c $(LDFLAGS) -o voting
 
-test_base: test_basesize_g.c
+base: test_basesize_g.c
 	$(CC) $(CFLAGS) test_basesize_g.c com/*.c $(LDFLAGS) -o test_base
 
-test_negative: test_negative.c
+negative: test_negative.c
 	$(CC) $(CFLAGS) test_negative.c com/*.c $(LDFLAGS) -o test_negative
+
+sanity: test_sanity.c
+	$(CC) $(CFLAGS) test_sanity.c com/*.c $(LDFLAGS) -o test_sanity
 
 test: test.c
 	$(CC) $(CFLAGS) test.c com/*.c $(LDFLAGS) -o test

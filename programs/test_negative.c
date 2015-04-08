@@ -8,7 +8,7 @@ int main(void)
 {
     pcs_public_key *pk = pcs_init_public_key();
     pcs_private_key *vk = pcs_init_private_key();
-    pcs_generate_key_pair(pk, vk, 256, 0);
+    pcs_generate_key_pair(pk, vk, 256);
 
     mpz_t a, b, c;
     mpz_inits(a, b, c, NULL);

@@ -4,6 +4,18 @@
  * @date 15 March 2015
  *
  * Implementation of the Paillier Cryptosystem (pcs).
+ *
+ * This variant is the first cryptoscheme described in Paillier's paper, scheme 1.
+ * We incorporate a number of optimizations.
+ *
+ * The chinese remainder theorem is used during the decryption process.
+ * The decrypted result is calculated seperately under mod p and mod q, and the
+ * two results are then applied with the chinese remainder theorem to get the
+ * decrypted result mod n.
+ *
+ * We also have a preprocessor flag which will allow a g chosen such that it is small.
+ * The main improvement in speed here is found in the encryption phase with a modular
+ * exponentation now being able to be taken with a smaller base than the usual n + 1.
  */
 
 #include <stdlib.h>
@@ -21,7 +33,7 @@ void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
 
     gmp_randstate_t rstate;
     gmp_randinit_default(rstate);
-    mpz_seed(t1, 256);
+    mpz_seed(t1, PCS_SEED_BITS);
     gmp_randseed(rstate, t1);
 
     /* Generate a random r in Zn*. This is very likely to pass on the first time
@@ -43,10 +55,24 @@ void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
 
 void pcs_decrypt(pcs_private_key *vk, mpz_t rop, mpz_t cipher1)
 {
-    mpz_powm(rop, cipher1, vk->lambda, vk->n2);
-    mpz_sub_ui(rop, rop, 1);
-    mpz_tdiv_q(rop, rop, vk->n);
-    mpz_mul(rop, rop, vk->mu);
+    mpz_t t1, t2;
+    mpz_inits(t1, t2, NULL);
+
+    mpz_sub_ui(t1, vk->p, 1);
+    mpz_powm(t1, cipher1, t1, vk->p2);
+    mpz_sub_ui(t1, t1, 1);
+    mpz_tdiv_q(t1, t1, vk->p);
+    mpz_mul(t1, t1, vk->hp);
+    mpz_mod(t1, t1, vk->p);
+
+    mpz_sub_ui(t2, vk->q, 1);
+    mpz_powm(t2, cipher1, t2, vk->q2);
+    mpz_sub_ui(t2, t2, 1);
+    mpz_tdiv_q(t2, t2, vk->q);
+    mpz_mul(t2, t2, vk->hq);
+    mpz_mod(t2, t2, vk->q);
+
+    mpz_2crt(rop, t1, vk->p, t2, vk->q);
     mpz_mod(rop, rop, vk->n);
 }
 
@@ -57,7 +83,7 @@ void pcs_reencrypt(pcs_public_key *pk, mpz_t rop, mpz_t op)
 
     gmp_randstate_t rstate;
     gmp_randinit_default(rstate);
-    mpz_seed(t1, 256);
+    mpz_seed(t1, PCS_SEED_BITS);
     gmp_randseed(rstate, t1);
 
     mpz_urandomm(t1, rstate, pk->n);
@@ -79,7 +105,6 @@ void pcs_ep_add(pcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
     mpz_powm(rop, pk->g, plain1, pk->n2);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
-
     mpz_clear(t1);
 }
 
@@ -94,64 +119,75 @@ void pcs_ep_mul(pcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
     mpz_powm(rop, cipher1, plain1, pk->n2);
 }
 
-void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits, int option)
+void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits)
 {
-    mpz_t p, q;
-    mpz_inits(p, q, NULL);
-
     gmp_randstate_t rstate;
     gmp_randinit_default(rstate);
-    mpz_seed(p, 256);
-    gmp_randseed(rstate, p);
+    mpz_seed(vk->p, PCS_SEED_BITS);
+    gmp_randseed(rstate, vk->p);
 
     /* To generate n as 'bits' bits, we generate two primes of length bits/2 and take the
      * product. This ensures that n is in the range [bits, bits+1]. We do not want p and q
      * to be the same prime, so ensure they are not. This is very very unlikely as bits
      * gets large. */
     do {
-        mpz_random_prime(p, rstate, 1 + (bits-1)/2);
-        mpz_random_prime(q, rstate, 1 + (bits-1)/2);
-    } while (mpz_cmp(p, q) == 0);
+        mpz_random_prime(vk->p, rstate, 1 + (bits-1)/2);
+        mpz_random_prime(vk->q, rstate, 1 + (bits-1)/2);
+    } while (mpz_cmp(vk->p, vk->q) == 0);
 
     /* Calculate private key values under the assumption that our primes are of similar
      * length */
-    mpz_mul(vk->n, p, q);
-    mpz_sub_ui(vk->lambda, p, 1);
-    mpz_sub_ui(q, q, 1);
-    mpz_lcm(vk->lambda, vk->lambda, q);
-    mpz_add_ui(q, q, 1);
+    mpz_pow_ui(vk->p2, vk->p, 2);
+    mpz_pow_ui(vk->q2, vk->q, 2);
+
+    mpz_mul(vk->n, vk->p, vk->q);
+    mpz_sub_ui(vk->lambda, vk->p, 1);
+    mpz_sub_ui(vk->q, vk->q, 1);
+    mpz_lcm(vk->lambda, vk->lambda, vk->q);
+    mpz_add_ui(vk->q, vk->q, 1);
     mpz_pow_ui(vk->n2, vk->n, 2);
 
     /* Calculate public key fields */
     mpz_set(pk->n, vk->n);
     mpz_set(pk->n2, vk->n2);
 
-//#ifdef PCS_GEQ2  /* A special variant for when g = 2 */
-if (option == 1) {
+#ifdef PCS_G_EQUAL_2  /* A special variant for when g = 2 */
     /* Ensure g is in Z^2* */
-    if (mpz_gcd_ui(NULL, pk->n2, 2) != 1) err("gcd is not 1");
+    if (mpz_gcd_ui(NULL, pk->n2, 2) != 1)
+        err("gcd is not 1");
 
     /* Ensure n divides the order of g */
     mpz_set_ui(pk->g, 2);
     mpz_powm(vk->mu, pk->g, vk->lambda, pk->n2);
     mpz_sub_ui(vk->mu, vk->mu, 1);
     mpz_tdiv_q(vk->mu, vk->mu, pk->n);
-    mpz_gcd(p, vk->mu, pk->n);
+    mpz_gcd(vk->hq, vk->mu, pk->n);
 
     /* Ensure mu has a multiplicative inverse */
-    if (mpz_cmp_ui(p, 1) != 0) err("mu has no inverse");
+    if (mpz_cmp_ui(vk->hq, 1) != 0)
+        err("mu has no inverse");
+
     mpz_invert(vk->mu, vk->mu, pk->n);
-}
-//#else
-else {
+#else
     mpz_invert(vk->mu, vk->lambda, vk->n);
     /* Otherwise g = n + 1 for simplicity */
     mpz_add_ui(pk->g, pk->n, 1);
-}
-//#endif
+#endif
+
+    /* Some precomputations for decryption */
+    mpz_sub_ui(vk->hp, vk->p, 1);
+    mpz_powm(vk->hp, pk->g, vk->hp, vk->p2);
+    mpz_sub_ui(vk->hp, vk->hp, 1);
+    mpz_tdiv_q(vk->hp, vk->hp, vk->p);
+    mpz_invert(vk->hp, vk->hp, vk->p);
+
+    mpz_sub_ui(vk->hq, vk->q, 1);
+    mpz_powm(vk->hq, pk->g, vk->hq, vk->q2);
+    mpz_sub_ui(vk->hq, vk->hq, 1);
+    mpz_tdiv_q(vk->hq, vk->hq, vk->q);
+    mpz_invert(vk->hq, vk->hq, vk->q);
 
     gmp_randclear(rstate);
-    mpz_clear(p); mpz_clear(q);
 }
 
 /* Sanity checks for use when importing keys */
@@ -206,7 +242,7 @@ pcs_private_key* pcs_init_private_key(void)
 {
     pcs_private_key *vk = malloc(sizeof(pcs_private_key));
     if (!vk) return NULL;
-    mpz_inits(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_inits(vk->p2, vk->q2, vk->hp, vk->hq, vk->p, vk->q, vk->lambda, vk->mu, vk->n, vk->n2, NULL);
     return vk;
 }
 
@@ -224,15 +260,17 @@ void pcs_free_public_key(pcs_public_key *pk)
 
 void pcs_clear_private_key(pcs_private_key *vk)
 {
-    mpz_zeros(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_zeros(vk->p2, vk->q2, vk->hp, vk->hq, vk->p, vk->q, vk->lambda, vk->mu, vk->n, vk->n2, NULL);
 }
 
 void pcs_free_private_key(pcs_private_key *vk)
 {
     pcs_clear_private_key(vk);
-    mpz_clears(vk->lambda, vk->mu, vk->n, vk->n2, NULL);
+    mpz_clears(vk->p2, vk->q2, vk->hp, vk->hq, vk->p, vk->q, vk->lambda, vk->mu, vk->n, vk->n2, NULL);
     free(vk);
 }
+
+/* Currently obsolete until implementation is more stable */
 
 int pcs_export_public_key(pcs_public_key *pk, const char *file)
 {

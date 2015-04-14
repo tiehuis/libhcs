@@ -26,7 +26,7 @@ void server_init(void)
 {
     server_pk = pcs_init_public_key();
     server_vk = pcs_init_private_key();
-    pcs_generate_key_pair(server_pk, server_vk, key_modulus_size, 0);
+    pcs_generate_key_pair(server_pk, server_vk, key_modulus_size);
 
     for (int i = 0; i < candidate_count; ++i) {
         mpz_init(candidates[i]);

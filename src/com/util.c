@@ -4,7 +4,8 @@
  * @author Marc Tiehuis
  *
  * This file contains common utility functions that are shared amongst
- * cryptographic schemes.
+ * cryptographic schemes. These are mainly additional functions that work
+ * on mpz_t types.
  */
 
 #include <stdarg.h>
@@ -116,7 +117,9 @@ static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
 /* Generate a random dsa_prime and set rop to the result */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
+    (void)bitcnt;
     mpz_random_prime(rop, rstate, 160);
+    dsa_g(rop, rstate, rop);
 }
 
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike other

@@ -2,6 +2,7 @@
 #define gmcs_H
 
 #include <gmp.h>
+#include "com/kvec.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,9 +20,7 @@ typedef struct {
 } gmcs_private_key;
 
 typedef struct {
-    mpz_t *m;
-    unsigned long alloc;
-    unsigned long length;
+    kvec_t(mpz_t) v;
 } gmcs_cipher;
 
 /* Construct keys */

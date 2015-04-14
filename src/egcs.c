@@ -5,11 +5,12 @@
 
 void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, int bits)
 {
-    mpz_t t; mpz_init(t);
-    mpz_seed(t, 256);
+    mpz_t t;
+    mpz_init(t);
 
     gmp_randstate_t rstate;
     gmp_randinit_default(rstate);
+    mpz_seed(t, 256);
     gmp_randseed(rstate, t);
 
     /* Generate a prime number which will be the size of our group */
@@ -26,7 +27,7 @@ void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, int bits)
     mpz_set(vk->q, pk->q);  // Problem here
 
     gmp_randclear(rstate);
-    mpz_zero(t); mpz_clear(t); // Because t stored the seed at one point, zero it
+    mpz_clear(t);
 }
 
 egcs_public_key* egcs_init_public_key(void)

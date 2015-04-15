@@ -114,14 +114,13 @@ static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
 
     mpz_clears(p, t, l, r, temp, NULL);
 }
+#endif
 
 /* Generate a random dsa_prime and set rop to the result */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
-    mpz_random_prime(rop, rstate, 160);
-    dsa_g(rop, rstate, rop);
+    mpz_random_prime(rop, rstate, bitcnt);
 }
-#endif
 
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike other
  * mpz functions rop must not be an aliased with any of the other arguments!

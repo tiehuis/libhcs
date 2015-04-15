@@ -81,10 +81,11 @@ void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bi
     do {
         mpz_random_prime(rop1, rstate, bitcnt);
         mpz_sub_ui(rop2, rop1, 1);
-        mpz_divexact_ui(rop1, rop1, 2);
-    } while (mpz_probab_prime_p(rop1, 25) == 0);
+        mpz_divexact_ui(rop2, rop2, 2);
+    } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
 
+#if 0
 /* Internal helper function for dsa_prime generation */
 static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
 {
@@ -117,10 +118,10 @@ static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
 /* Generate a random dsa_prime and set rop to the result */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
-    (void)bitcnt;
     mpz_random_prime(rop, rstate, 160);
     dsa_g(rop, rstate, rop);
 }
+#endif
 
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike other
  * mpz functions rop must not be an aliased with any of the other arguments!

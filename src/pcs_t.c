@@ -18,16 +18,11 @@
 #include "com/util.h"
 #include "pcs_t.h"
 
-/*
- * Algorithm as seen in the initial paper. Simple optimizations
- * have been added. rop and op can be aliases.
- */
+/* This is much simpler for the paillier scheme and is simply
+ * a computation of L(x) */
 static void dlog_s(pcs_t_private_key *vk, mpz_t rop, mpz_t op)
 {
-    /* For s = 1, dlog_s is drastically simpler and is simply
-     * L(x) */
-    mpz_mod(rop, op, vk->n2);
-    mpz_sub_ui(rop, rop, 1);
+    mpz_sub_ui(rop, op, 1);
     mpz_divexact(rop, rop, vk->n);
     mpz_mod(rop, rop, vk->n);
 }
@@ -52,6 +47,7 @@ void pcs_t_encrypt(pcs_t_public_key *pk, mpz_t rop, mpz_t plain1)
     mpz_clear(t1);
 }
 
+#if 0
 static int dlog_equality(mpz_t u, mpz_t uh, mpz_t v, mpz_t vh)
 {
     /* Read up on the Fiat-Shamir heuristic and utilize a hash function
@@ -59,6 +55,7 @@ static int dlog_equality(mpz_t u, mpz_t uh, mpz_t v, mpz_t vh)
      * put one in com */
     return 1;
 }
+#endif
 
 /* Compute a servers share and set rop to the result. rop should usually
  * be part of an array so we can call pcs_t_share_combine with ease. */
@@ -75,23 +72,43 @@ void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
     mpz_clear(t1);
 }
 
-void lambda_S(mpz_t rop, unsigned long i)
-{
-}
-
 void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned long cl)
 {
     /* Take a subset of w shares from c, if we don't have w shares then we can
      * not combine and get a result. Set rop to 0. */
     if (cl < vk->w) mpz_set_ui(rop, 0);
 
-    mpz_t t1;
+    mpz_t t1, t2;
     mpz_init(t1);
+    mpz_init(t2);
 
-    /* Could alter loop to choose a random subset instead of always 0-indexing */
+    /* Could alter loop to choose a random subset instead of always 0-indexing.
+     * Also, note that the first iteration will always be 0, thus we are computing
+     * c[0]^0 = 1 and multiplying against rop. Skip this first loop and being
+     * from i = 1. */
     mpz_set_ui(rop, 1);
-    for (unsigned long i = 0; i < vk->w; ++i) {
-        lambda_S(t1, i);
+    for (unsigned long i = 1; i < vk->w; ++i) {
+
+        /* Shares must be set to some value */
+        assert(mpz_cmp_ui(c[i], 0) != 0);
+
+        /* Compute lambda_{0,i}^S */
+        mpz_set_ui(t1, 1);
+        for (unsigned long j = 0; j < vk->w; ++j) {
+            if (j == i) continue; /* i' in S\i */
+#if 0
+            mpz_sub(t2, c[i], c[j]);
+            mpz_tdiv_q(t2, c[i], t2);
+            mpz_neg(t2, t2);
+            mpz_mul(t1, t1, t2);
+            mpz_mod(t1, t1, vk->n2);
+#else
+            /* We are calculating lagrange coefficients */
+            mpz_mul_si(t1, t1, -i / (i - j));
+#endif
+        }
+        /* Now we have lambda_{0,i}^S in t1 */
+        mpz_mul(t1, t1, vk->lambda);
         mpz_mul_ui(t1, t1, 2);
         mpz_powm(t1, c[i], t1, vk->n2);
         mpz_mul(rop, rop, t1);
@@ -107,10 +124,12 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned lo
     mpz_mul(rop, rop, t1);
 
     mpz_clear(t1);
+    mpz_clear(t2);
 }
 
 static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned long v)
 {
+
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
@@ -124,8 +143,12 @@ static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned
     mpz_set(rop, vk->d);
     for (unsigned long i = 1; i < vk->w; ++i) {
         mpz_ui_pow_ui(t1, v, i);
+#ifdef PERSIST_POLYNOMIAL
+        mpz_mul(t1, t1, vk->mm[i]);
+#else
         mpz_urandomm(t2, rstate, vk->n2m);
         mpz_mul(t1, t1, t2);
+#endif
         mpz_add(rop, rop, t1);
         mpz_mod(rop, rop, vk->n2m);
     }
@@ -148,8 +171,8 @@ void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigne
 
 /* Look into methods of using multiparty computation to generate these keys and
  * the data such that we don't have to have a trusted party for generation. */
-void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, const unsigned long bits,
-        const unsigned long l, const unsigned long w)
+void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
+        const unsigned long bits, const unsigned long l, const unsigned long w)
 {
     /* The threshold scheme will only succedd if l <= w / 2. Crash
      * if this assertion does not hold. */
@@ -210,8 +233,18 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, const 
     /* Precompute delta = l! */
     mpz_fac_ui(vk->delta, vk->l);
 
-    /* Compute v being a cyclic generator of squares */
-    mpz_set_ui(vk->v, 4);
+    /* Compute v being a cyclic generator of squares. This group is
+     * always cyclic of order n * p' * q' since n is a safe prime product. */
+    mpz_set(vk->v, vk->ph);
+
+#ifdef PERSIST_POLYNOMIAL
+    vk->mm = malloc(sizeof(mpz_t) * vk->w);
+    mpz_init_set(vk->mm[0], vk->d);
+    for (unsigned long i = 1; i < vk->w; ++i) {
+        mpz_init(vk->mm[i]);
+        mpz_urandomm(vk->mm[i], rstate, vk->n2m);
+    }
+#endif
 
     gmp_randclear(rstate);
     mpz_clear(t1);

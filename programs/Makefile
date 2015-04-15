@@ -22,7 +22,10 @@ negative: test_negative.c
 sanity: test_sanity.c
 	$(CC) $(CFLAGS) test_sanity.c com/*.c $(LDFLAGS) -o test_sanity
 
+lib:
+	(cd ../src && make)
+
 clean:
 	rm -rf test_std_voting test_sanity test_threshold
 
-.PHONY: clean
+.PHONY: clean lib

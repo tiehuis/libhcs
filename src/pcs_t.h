@@ -10,6 +10,8 @@
 #ifndef PCS_T_H
 #define PCS_T_H
 
+//#define PERSIST_POLYNOMIAL
+
 #include <gmp.h>
 
 #ifdef __cplusplus
@@ -30,31 +32,30 @@ typedef struct {
     mpz_t n;        /**< Modulus of the key. n = p * q */
     mpz_t g;        /**< Precomputation: n + 1 usually, may be 2*/
     mpz_t n2;       /**< Precomputation: n^2 */
-
 } pcs_t_public_key;
 
 /**
  * @brief The type for a private key, for use with the Paillier system.
  */
 typedef struct {
-    unsigned long w;
-    unsigned long l;
-    mpz_t v;    // Cyclic generator of squares in Z*n^2
-    mpz_t *vi;
-    mpz_t m;
-    mpz_t n2m;
-
-    mpz_t delta;
-
-
-    mpz_t d;
-    mpz_t p;        /**< A random prime determined during key generation */
-    mpz_t ph;
-    mpz_t q;        /**< A random prime determined during key generation */
-    mpz_t qh;
-    mpz_t lambda;   /**< Precomputation: euler-phi(p, q) */
-    mpz_t n;        /**< Modulus of the key: p * q */
-    mpz_t n2;       /**< Precomputation: n^2 */
+#ifdef PERSIST_POLYNOMIAL
+    mpz_t *mm;
+#endif
+    unsigned long w;    /**< The number of servers req to successfully decrypt */
+    unsigned long l;    /**< The number of decryption servers */
+    mpz_t *vi;          /**< Verification values for the decrypt servers: length = w */
+    mpz_t v;            /**< Cyclic generator of squares in Z*n^2 */
+    mpz_t delta;        /**< Precomputation: l! */
+    mpz_t d;            /**< d = 0 mod m and d = 1 mod n^2 */
+    mpz_t p;            /**< A random prime determined during key generation */
+    mpz_t ph;           /**< A random prime such that p = 2*ph + 1 */
+    mpz_t q;            /**< A random prime determined during key generation */
+    mpz_t qh;           /**< A random prime such that q = 2*qh + 1 */
+    mpz_t lambda;       /**< Precomputation: euler-phi(p, q) */
+    mpz_t m;            /**< Precomputation: ph * qh */
+    mpz_t n;            /**< Modulus of the key: p * q */
+    mpz_t n2;           /**< Precomputation: n^2 */
+    mpz_t n2m;          /**< Precomputation: n^2 * m */
 } pcs_t_private_key;
 
 void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,

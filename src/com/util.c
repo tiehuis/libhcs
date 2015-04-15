@@ -71,7 +71,9 @@ void mpz_seed(mpz_t seed, int bits)
  * are not disrupted by this prime choice. */
 void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
-    mpz_urandomb(rop, rstate, bitcnt);  // Techinically in small cases we could get a prime of n + 1 bits
+    /* Technically in small cases we could get a prime of n + 1 bits */
+    mpz_urandomb(rop, rstate, bitcnt);
+    mpz_setbit(rop, bitcnt);
     mpz_nextprime(rop, rop);
 }
 

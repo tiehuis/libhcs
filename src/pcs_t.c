@@ -211,7 +211,7 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, const 
     mpz_fac_ui(vk->delta, vk->l);
 
     /* Compute v being a cyclic generator of squares */
-    mpz_set_ui(vk->v, 2);
+    mpz_set_ui(vk->v, 4);
 
     gmp_randclear(rstate);
     mpz_clear(t1);

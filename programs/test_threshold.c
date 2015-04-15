@@ -1,5 +1,6 @@
 #include <hcs.h>
 
+#define MODULUS_BITS 16
 #define AU_COUNT 3
 #define AU_REQ 1
 
@@ -17,7 +18,7 @@ int main(void)
     mpz_init_set_ui(a, 10);
     mpz_init(b);
 
-    pcs_t_generate_key_pair(pk, vk, 512, AU_REQ, AU_COUNT);
+    pcs_t_generate_key_pair(pk, vk, MODULUS_BITS, AU_REQ, AU_COUNT);
     pcs_t_encrypt(pk, b, a);
 
     for (int i = 0; i < AU_COUNT; ++i)

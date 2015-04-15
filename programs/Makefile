@@ -4,6 +4,9 @@ LDFLAGS += -lgmp -lhcs
 
 all: std_voting sanity threshold
 
+thresh_voting: test_thresh_voting.c
+	$(CC) $(CFLAGS) test_thresh_voting.c $(LDFLAGS) -o test_thresh_voting
+
 std_voting: test_std_voting.c
 	$(CC) $(CFLAGS) test_std_voting.c $(LDFLAGS) -o test_std_voting
 

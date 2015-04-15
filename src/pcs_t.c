@@ -8,6 +8,11 @@
  * This scheme is a threshold variant of the Paillier system. It loosely follows
  * the scheme presented in the paper by damgard-jurik, but with a chosen base of
  * 2, rather than the variable s+1. This scheme was written first for simplicity.
+ *
+ * POSSIBLE IMPROVEMENTS:
+ *
+ *  - Rewrite all assertions as checks that return error codes instead. We don't
+ *    want to crash and instead want to relay this information to the caller.
  */
 
 #include <assert.h>
@@ -89,7 +94,8 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned lo
     mpz_set_ui(rop, 1);
     for (unsigned long i = 1; i < vk->w; ++i) {
 
-        /* Shares must be set to some value */
+        /* Shares must be set to some value. Return with error if not
+         * instead of making an assertion. */
         assert(mpz_cmp_ui(c[i], 0) != 0);
 
         /* Compute lambda_{0,i}^S */
@@ -108,7 +114,7 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned lo
 #endif
         }
         /* Now we have lambda_{0,i}^S in t1 */
-        mpz_mul(t1, t1, vk->lambda);
+        mpz_mul(t1, t1, vk->delta);
         mpz_mul_ui(t1, t1, 2);
         mpz_powm(t1, c[i], t1, vk->n2);
         mpz_mul(rop, rop, t1);
@@ -117,11 +123,12 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned lo
     /* We now have c', so use algorithm from Theorem 1 to derive the result */
     dlog_s(vk, rop, rop);
 
-    /* Multiply by (4*lambda^2)^-1 mod n^2 to get result */
-    mpz_pow_ui(t1, vk->lambda, 2);
+    /* Multiply by (4*delta^2)^-1 mod n^2 to get result */
+    mpz_pow_ui(t1, vk->delta, 2);
     mpz_mul_ui(t1, t1, 4);
     mpz_invert(t1, t1, vk->n2); // assume this inverse exists for now, add a check
     mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, vk->n2);
 
     mpz_clear(t1);
     mpz_clear(t2);

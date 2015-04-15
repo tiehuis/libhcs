@@ -10,7 +10,7 @@
 #ifndef PCS_T_H
 #define PCS_T_H
 
-//#define PERSIST_POLYNOMIAL
+#define PERSIST_POLYNOMIAL
 
 #include <gmp.h>
 
@@ -41,11 +41,13 @@ typedef struct {
 #ifdef PERSIST_POLYNOMIAL
     mpz_t *mm;
 #endif
+    /* Potentially public */
     unsigned long w;    /**< The number of servers req to successfully decrypt */
     unsigned long l;    /**< The number of decryption servers */
+    mpz_t delta;        /**< Precomputation: l! */
+
     mpz_t *vi;          /**< Verification values for the decrypt servers: length = w */
     mpz_t v;            /**< Cyclic generator of squares in Z*n^2 */
-    mpz_t delta;        /**< Precomputation: l! */
     mpz_t d;            /**< d = 0 mod m and d = 1 mod n^2 */
     mpz_t p;            /**< A random prime determined during key generation */
     mpz_t ph;           /**< A random prime such that p = 2*ph + 1 */

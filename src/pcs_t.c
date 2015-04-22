@@ -42,7 +42,7 @@ void pcs_t_encrypt(pcs_t_public_key *pk, mpz_t rop, mpz_t plain1)
     mpz_seed(t1, PCS_T_SEED_BITS);
     gmp_randseed(rstate, t1);
 
-    mpz_urandomm(t1, rstate, pk->n);
+    mpz_random_in_mult_group(t1, rstate, pk->n);
     mpz_powm(rop, t1, pk->n, pk->n2);
     mpz_powm(t1, pk->g, plain1, pk->n2);
     mpz_mul(rop, rop, t1);

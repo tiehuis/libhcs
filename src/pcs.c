@@ -55,9 +55,8 @@
 
 void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
 {
-    mpz_t t1, t2;
+    mpz_t t1;
     mpz_init(t1);
-    mpz_init(t2);
 
     gmp_randstate_t rstate;
     gmp_randinit_default(rstate);
@@ -66,20 +65,16 @@ void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
 
     /* Generate a random r in Zn*. This is very likely to pass on the first time
      * as n is comprised of two large prime factors n = p*q, p != q */
-    do {
-        mpz_urandomm(t2, rstate, pk->n);
-        mpz_gcd(t1, t2, pk->n);
-    } while (mpz_cmp_ui(t1, 1));
+    mpz_random_in_mult_group(t1, rstate, pk->n);
 
     /* g^m * r^n mod n^2 = (g^m mod n^2) * (r^n mod n^2) mod n^2 */
-    mpz_powm(t2, t2, pk->n, pk->n2);
+    mpz_powm(t1, t1, pk->n, pk->n2);
     mpz_powm(rop, pk->g, plain1, pk->n2);
-    mpz_mul(rop, rop, t2);
+    mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 
     gmp_randclear(rstate);
     mpz_clear(t1);
-    mpz_clear(t2);
 }
 
 void pcs_decrypt(pcs_private_key *vk, mpz_t rop, mpz_t cipher1)
@@ -119,7 +114,7 @@ void pcs_reencrypt(pcs_public_key *pk, mpz_t rop, mpz_t op)
     mpz_seed(t1, PCS_SEED_BITS);
     gmp_randseed(rstate, t1);
 
-    mpz_urandomm(t1, rstate, pk->n);
+    mpz_random_in_mult_group(t1, rstate, pk->n);
     mpz_powm(t1, t1, pk->n, pk->n2);
     mpz_mul(rop, op, t1);
     mpz_mod(rop, rop, pk->n2);

@@ -65,6 +65,23 @@ void mpz_seed(mpz_t seed, int bits)
     fclose(fd);
 }
 
+/* Generate a random value that is in Z_(op)^*. This simply random chooses
+ * values until we get one with gcd(rop, op) of n. If one has knowledge about
+ * the value of rop, then calling this function may not be neccessary. i.e.
+ * if rop is prime, we can just call urandomm directly. */
+void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    do {
+        mpz_urandomm(rop, rstate, op);
+        mpz_gcd(t1, rop, op);
+    } while (mpz_cmp_ui(t1, 1) != 0);
+
+    mpz_clear(t1);
+}
+
 /* Generate a random prime of minimum bitcnt number of bits. Currently this doesn't
  * have any other requirements. Strong primes or anything generally are not
  * seen as too useful now, as newer factorization schemes such as the GFNS

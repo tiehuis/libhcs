@@ -71,7 +71,7 @@ void djcs_encrypt(djcs_public_key *pk, mpz_t rop, mpz_t plain1)
     mpz_seed(t1, 256);
     gmp_randseed(rstate, t1);
 
-    mpz_urandomm(t1, rstate, pk->n[pk->s]);
+    mpz_random_in_mult_group(t1, rstate, pk->n[0]);
 
     /* E(i,r) = g^i r^(n^s) mod (n^s+1) */
     mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);

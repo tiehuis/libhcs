@@ -1,8 +1,8 @@
 #include <hcs.h>
 
 #define MODULUS_BITS 16
-#define AU_COUNT 3
-#define AU_REQ 1
+#define AU_COUNT 4
+#define AU_REQ 3
 
 int main(void)
 {

@@ -148,7 +148,7 @@ static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned
 
     /* Compute a polynomial with random coefficients in n2m */
     mpz_set(rop, vk->d);
-    for (unsigned long i = 1; i < vk->w; ++i) {
+    for (unsigned long i = 1; i < vk->l; ++i) {
         mpz_ui_pow_ui(t1, v, i);
 #ifdef PERSIST_POLYNOMIAL
         mpz_mul(t1, t1, vk->mm[i]);
@@ -179,11 +179,13 @@ void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigne
 /* Look into methods of using multiparty computation to generate these keys and
  * the data such that we don't have to have a trusted party for generation. */
 void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
-        const unsigned long bits, const unsigned long l, const unsigned long w)
+        const unsigned long bits, const unsigned long w, const unsigned long l)
 {
-    /* The threshold scheme will only succedd if l <= w / 2. Crash
-     * if this assertion does not hold. */
-    assert(l <= w / 2);
+    /* We can only perform this encryption if we have a w >= l / 2. Unsure
+     * if this is the rounded value or not. i.e. is (1,3) system okay?
+     * 3 / 2 = 1 by truncation >= 1. Need to confirm if this is allowed, or
+     * more traditional rounding should be applied. */
+    assert(w >= l / 2);
 
     mpz_t t1, t2;
     mpz_init(t1);
@@ -233,8 +235,8 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
     vk->w = w;
 
     /* Allocate space for verification values */
-    vk->vi = malloc(sizeof(mpz_t) * w);
-    for (unsigned long i = 0; i < w; ++i)
+    vk->vi = malloc(sizeof(mpz_t) * l);
+    for (unsigned long i = 0; i < l; ++i)
         mpz_init(vk->vi[i]);
 
     /* Precompute delta = l! */
@@ -245,9 +247,9 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
     mpz_set(vk->v, vk->ph);
 
 #ifdef PERSIST_POLYNOMIAL
-    vk->mm = malloc(sizeof(mpz_t) * vk->w);
+    vk->mm = malloc(sizeof(mpz_t) * vk->l);
     mpz_init_set(vk->mm[0], vk->d);
-    for (unsigned long i = 1; i < vk->w; ++i) {
+    for (unsigned long i = 1; i < vk->l; ++i) {
         mpz_init(vk->mm[i]);
         mpz_urandomm(vk->mm[i], rstate, vk->n2m);
     }

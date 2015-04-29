@@ -8,6 +8,7 @@
  * on mpz_t types.
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <gmp.h>
@@ -104,38 +105,7 @@ void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bi
     } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
 
-#if 0
-/* Internal helper function for dsa_prime generation */
-static void dsa_g(mpz_t c, gmp_randstate_t rstate, mpz_t alpha)
-{
-    mpz_t p, t, l, r, temp;
-    mpz_init(r);
-    mpz_init(temp);
-    mpz_init_set_ui(t, 2 * 29);
-    mpz_init_set_str(p, "6 649 693 230", 10); // 2 * 3 * 5 * 7 ... * 29
-    mpz_set_ui(c, 0);
-
-    size_t seqlen = mpz_sizeinbase(alpha, 2);
-    mpz_init_set_ui(l, seqlen);
-    mpz_sub(l, l, t);
-
-    for (int i = 0; i < 10; ++i) {
-        do {
-            mpz_urandomm(r, rstate, l);
-            mpz_tdiv_q_2exp(r, r, mpz_get_ui(r));
-            mpz_and(r, r, t);
-            mpz_mod(temp, r, p);
-        } while (mpz_cmp_ui(temp, 0) == 0);
-
-        mpz_add(c, c, r);
-        mpz_mod(c, c, p);
-    }
-
-    mpz_clears(p, t, l, r, temp, NULL);
-}
-#endif
-
-/* Generate a random dsa_prime and set rop to the result */
+/* Generate a random dsa_prime and set rop to the result. Currently not implemented. */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
     mpz_random_prime(rop, rstate, bitcnt);
@@ -150,6 +120,9 @@ void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
     mpz_t t;
     mpz_init(t);
 
+    mpz_gcd(t, con1_m, con2_m);
+    assert(mpz_cmp_ui(t, 1) == 0);
+
     mpz_invert(rop, con2_m, con1_m);
     mpz_mul(rop, rop, con2_m);
     mpz_mul(rop, rop, con1_a);
@@ -157,6 +130,8 @@ void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
     mpz_mul(t, t, con1_m);
     mpz_mul(t, t, con2_a);
     mpz_add(rop, rop, t);
+    mpz_mul(t, con1_m, con2_m);
+    mpz_mod(rop, rop, t);
 
     mpz_clear(t);
 }

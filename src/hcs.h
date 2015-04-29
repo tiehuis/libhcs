@@ -6,5 +6,6 @@
 #include "pcs_t.h"
 #include "djcs.h"
 #include "egcs.h"
+#include "hcs_rand.h"
 
 #endif

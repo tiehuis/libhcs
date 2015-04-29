@@ -32,23 +32,17 @@ static void dlog_s(pcs_t_private_key *vk, mpz_t rop, mpz_t op)
     mpz_mod(rop, rop, vk->n);
 }
 
-void pcs_t_encrypt(pcs_t_public_key *pk, mpz_t rop, mpz_t plain1)
+void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(t1, PCS_T_SEED_BITS);
-    gmp_randseed(rstate, t1);
-
-    mpz_random_in_mult_group(t1, rstate, pk->n);
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n);
     mpz_powm(rop, t1, pk->n, pk->n2);
     mpz_powm(t1, pk->g, plain1, pk->n2);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 
-    gmp_randclear(rstate);
     mpz_clear(t1);
 }
 
@@ -72,52 +66,48 @@ void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
 
     mpz_mul(t1, au->si, vk->delta);
     mpz_mul_ui(t1, t1, 2);
-    mpz_powm(rop, cipher1, t1, vk->n2); // Can i powermod here? I do it later??
+    mpz_powm(rop, cipher1, t1, vk->n2);
 
     mpz_clear(t1);
 }
 
-void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned long cl)
+/* Also need to label the index of the servers that are being used. Unused shares
+ * must be set to value 0. */
+void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
 {
-    /* Take a subset of w shares from c, if we don't have w shares then we can
-     * not combine and get a result. Set rop to 0. */
-    if (cl < vk->w) mpz_set_ui(rop, 0);
-
-    mpz_t t1, t2;
+    mpz_t t1, t2, t3;
     mpz_init(t1);
     mpz_init(t2);
+    mpz_init(t3);
 
-    /* Could alter loop to choose a random subset instead of always 0-indexing.
-     * Also, note that the first iteration will always be 0, thus we are computing
-     * c[0]^0 = 1 and multiplying against rop. Skip this first loop and being
-     * from i = 1. */
+    /* Could alter loop to choose a random subset instead of always 0-indexing. */
     mpz_set_ui(rop, 1);
-    for (unsigned long i = 1; i < vk->w; ++i) {
+    for (unsigned long i = 0; i < vk->l; ++i) {
 
-        /* Shares must be set to some value. Return with error if not
-         * instead of making an assertion. */
-        assert(mpz_cmp_ui(c[i], 0) != 0);
+        if (mpz_cmp_ui(c[i], 0) == 0)
+            continue; /* This share adds zero to the sum so skip. */
 
-        /* Compute lambda_{0,i}^S */
-        mpz_set_ui(t1, 1);
-        for (unsigned long j = 0; j < vk->w; ++j) {
-            if (j == i) continue; /* i' in S\i */
-#if 0
-            mpz_sub(t2, c[i], c[j]);
-            mpz_tdiv_q(t2, c[i], t2);
-            mpz_neg(t2, t2);
-            mpz_mul(t1, t1, t2);
-            mpz_mod(t1, t1, vk->n2);
-#else
-            /* We are calculating lagrange coefficients */
-            mpz_mul_si(t1, t1, -i / (i - j));
-#endif
+        /* Compute lambda_{0,i}^S. This is computed using the values of the
+         * shares, not the indices? */
+        mpz_set(t1, vk->delta);
+        for (unsigned long j = 0; j < vk->l; ++j) {
+            if ((j == i) || mpz_cmp_ui(c[j], 0) == 0)
+                continue; /* i' in S\i and non-zero */
+
+            long v = (long)j - (long)i;
+            mpz_tdiv_q_ui(t1, t1, (v < 0 ? v*-1 : v));
+            if (v < 0) mpz_neg(t1, t1);
+            mpz_mul_ui(t1, t1, j + 1);
         }
-        /* Now we have lambda_{0,i}^S in t1 */
-        mpz_mul(t1, t1, vk->delta);
-        mpz_mul_ui(t1, t1, 2);
-        mpz_powm(t1, c[i], t1, vk->n2);
-        mpz_mul(rop, rop, t1);
+
+        gmp_printf("lambda = %Zd\n", t1);
+
+        mpz_abs(t2, t1);
+        mpz_mul_ui(t2, t2, 2);
+        mpz_powm(t2, c[i], t2, vk->n2);
+        if (mpz_sgn(t1) < 0) mpz_invert(t2, t2, vk->n2);
+        mpz_mul(rop, rop, t2);
+        mpz_mod(rop, rop, vk->n2);
     }
 
     /* We now have c', so use algorithm from Theorem 1 to derive the result */
@@ -126,41 +116,31 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned lo
     /* Multiply by (4*delta^2)^-1 mod n^2 to get result */
     mpz_pow_ui(t1, vk->delta, 2);
     mpz_mul_ui(t1, t1, 4);
-    mpz_invert(t1, t1, vk->n2); // assume this inverse exists for now, add a check
+    assert(mpz_invert(t1, t1, vk->n)); // assume this inverse exists for now, add a check
+    gmp_printf("delta^-1 = %Zd\n", t1);
     mpz_mul(rop, rop, t1);
-    mpz_mod(rop, rop, vk->n2);
+    mpz_mod(rop, rop, vk->n);
 
     mpz_clear(t1);
     mpz_clear(t2);
+    mpz_clear(t3);
 }
 
 static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned long v)
 {
-
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(vk->d, PCS_T_SEED_BITS);
-    gmp_randseed(rstate, vk->d);
-
-    /* Compute a polynomial with random coefficients in n2m */
-    mpz_set(rop, vk->d);
-    for (unsigned long i = 1; i < vk->l; ++i) {
+    /* Compute a polynomial with random coefficients in nm */
+    mpz_set(rop, vk->mm[0]);
+    for (unsigned long i = 1; i < vk->w; ++i) {
         mpz_ui_pow_ui(t1, v, i);
-#ifdef PERSIST_POLYNOMIAL
         mpz_mul(t1, t1, vk->mm[i]);
-#else
-        mpz_urandomm(t2, rstate, vk->n2m);
-        mpz_mul(t1, t1, t2);
-#endif
         mpz_add(rop, rop, t1);
-        mpz_mod(rop, rop, vk->n2m);
+        mpz_mod(rop, rop, vk->nm);
     }
 
-    gmp_randclear(rstate);
     mpz_clear(t1);
     mpz_clear(t2);
 }
@@ -171,46 +151,35 @@ static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned
  * simplicity in a local example. */
 void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigned long i)
 {
-    polynomial_function(vk, au->si, i);
+    polynomial_function(vk, au->si, i + 1);
     mpz_mul(vk->vi[i], vk->delta, au->si);
     mpz_powm(vk->vi[i], vk->v, vk->vi[i], vk->n2);
 }
 
 /* Look into methods of using multiparty computation to generate these keys and
  * the data such that we don't have to have a trusted party for generation. */
-void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
+void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_rand *hr,
         const unsigned long bits, const unsigned long w, const unsigned long l)
 {
     /* We can only perform this encryption if we have a w >= l / 2. Unsure
      * if this is the rounded value or not. i.e. is (1,3) system okay?
      * 3 / 2 = 1 by truncation >= 1. Need to confirm if this is allowed, or
      * more traditional rounding should be applied. */
-    assert(w >= l / 2);
+    assert(l / 2 <= w && w <= l);
 
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(vk->d, PCS_T_SEED_BITS);
-    gmp_randseed(rstate, vk->d);
-
     /* Choose p and q to be safe primes */
     do {
-        mpz_random_safe_prime(vk->p, vk->qh, rstate, 1 + (bits-1)/2);
-        mpz_random_safe_prime(vk->q, vk->ph, rstate, 1 + (bits-1)/2);
+        mpz_random_safe_prime(vk->p, vk->qh, hr->rstate, 1 + (bits-1)/2);
+        mpz_random_safe_prime(vk->q, vk->ph, hr->rstate, 1 + (bits-1)/2);
     } while (mpz_cmp(vk->p, vk->q) == 0);
 
     /* n = p * q */
     mpz_mul(pk->n, vk->p, vk->q);
     mpz_set(vk->n, pk->n);
-
-    /* Lambda = lcm(p-1,q-1) */
-    mpz_sub_ui(vk->lambda, vk->p, 1);
-    mpz_sub_ui(vk->q, vk->q, 1);
-    mpz_lcm(vk->lambda, vk->lambda, vk->q);
-    mpz_add_ui(vk->q, vk->q, 1);
 
     /* n^2 = n * n */
     mpz_pow_ui(pk->n2, pk->n, 2);
@@ -219,18 +188,24 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
     /* g = n + 1 */
     mpz_add_ui(pk->g, pk->n, 1);
 
-    /* d == 1 mod n^2 and d == 0 mod lambda */
-    mpz_set_ui(t1, 1);
-    mpz_set_ui(t2, 0);
-    mpz_2crt(vk->d, t1, vk->n2, t2, vk->lambda);
-
     /* Compute m = ph * qh */
     mpz_mul(vk->m, vk->ph, vk->qh);
 
+    gmp_printf("m = %Zd = %Zd*%Zd\nn = %Zd = %Zd*%Zd\n", vk->m, vk->ph, vk->qh, vk->n, vk->p, vk->q);
+
+    /* d == 1 mod n and d == 0 mod m */
+    mpz_set_ui(t1, 1);
+    mpz_set_ui(t2, 0);
+    mpz_2crt(vk->d, t1, vk->n, t2, vk->m);
+    gmp_printf("x = %Zd (mod %Zd)\nx = %Zd (mod %Zd)\n", t1, vk->n, t2, vk->m);
+    gmp_printf("d = %Zd\n", vk->d);
+
     /* Compute n^2 * m */
-    mpz_mul(vk->n2m, vk->n2, vk->m);
+    mpz_mul(vk->nm, vk->n, vk->m);
+    gmp_printf("nm = %Zd\nn^2 = %Zd\n", vk->nm, vk->n2);
 
     /* Set l and w in private key */
+    printf("l = %lu\nw = %lu\n", l, w);
     vk->l = l;
     vk->w = w;
 
@@ -241,23 +216,22 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
 
     /* Precompute delta = l! */
     mpz_fac_ui(vk->delta, vk->l);
+    gmp_printf("delta = %Zd\n", vk->delta);
 
     /* Compute v being a cyclic generator of squares. This group is
      * always cyclic of order n * p' * q' since n is a safe prime product. */
     mpz_set(vk->v, vk->ph);
 
-#ifdef PERSIST_POLYNOMIAL
-    vk->mm = malloc(sizeof(mpz_t) * vk->l);
+    vk->mm = malloc(sizeof(mpz_t) * vk->w);
     mpz_init_set(vk->mm[0], vk->d);
-    for (unsigned long i = 1; i < vk->l; ++i) {
+    for (unsigned long i = 1; i < vk->w; ++i) {
         mpz_init(vk->mm[i]);
-        mpz_urandomm(vk->mm[i], rstate, vk->n2m);
+        mpz_urandomm(vk->mm[i], hr->rstate, vk->nm);
     }
-#endif
 
-    gmp_randclear(rstate);
     mpz_clear(t1);
     mpz_clear(t2);
+    printf("\n");
 }
 
 pcs_t_auth_server* pcs_t_init_auth_server(void)
@@ -285,7 +259,7 @@ pcs_t_private_key* pcs_t_init_private_key(void)
 
     vk->w = vk->l = 0;
     mpz_inits(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->lambda, vk->n2m, vk->m,
+             vk->v, vk->nm, vk->m,
              vk->n, vk->n2, vk->d, vk->delta, NULL);
 
     return vk;
@@ -306,7 +280,7 @@ void pcs_t_free_public_key(pcs_t_public_key *pk)
 void pcs_t_free_private_key(pcs_t_private_key *vk)
 {
     mpz_clears(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->lambda, vk->n2m, vk->m,
+             vk->v, vk->nm, vk->m,
              vk->n, vk->n2, vk->d, vk->delta, NULL);
 
     for (unsigned long i = 0; i < vk->w; ++i)

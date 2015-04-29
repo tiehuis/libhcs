@@ -2,6 +2,7 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wsign-compare"
 #pragma clang diagnostic ignored "-Wunused-const-variable"
+#pragma clang diagnostic ignored "-Wimplicit-function-declaration"
 
 /*
 Copyright (c) 2005-2013, Troy D. Hanson     http://troydhanson.github.com/tpl/

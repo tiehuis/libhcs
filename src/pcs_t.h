@@ -10,9 +10,8 @@
 #ifndef PCS_T_H
 #define PCS_T_H
 
-#define PERSIST_POLYNOMIAL
-
 #include <gmp.h>
+#include "hcs_rand.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,9 +37,7 @@ typedef struct {
  * @brief The type for a private key, for use with the Paillier system.
  */
 typedef struct {
-#ifdef PERSIST_POLYNOMIAL
     mpz_t *mm;
-#endif
     /* Potentially public */
     unsigned long w;    /**< The number of servers req to successfully decrypt */
     unsigned long l;    /**< The number of decryption servers */
@@ -53,14 +50,13 @@ typedef struct {
     mpz_t ph;           /**< A random prime such that p = 2*ph + 1 */
     mpz_t q;            /**< A random prime determined during key generation */
     mpz_t qh;           /**< A random prime such that q = 2*qh + 1 */
-    mpz_t lambda;       /**< Precomputation: euler-phi(p, q) */
     mpz_t m;            /**< Precomputation: ph * qh */
     mpz_t n;            /**< Modulus of the key: p * q */
     mpz_t n2;           /**< Precomputation: n^2 */
-    mpz_t n2m;          /**< Precomputation: n^2 * m */
+    mpz_t nm;          /**< Precomputation: n * m */
 } pcs_t_private_key;
 
-void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
+void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_rand *hr,
         const unsigned long bits, const unsigned long l, const unsigned long w);
 
 void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigned long i);
@@ -68,9 +64,9 @@ void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigne
 void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
         mpz_t rop, mpz_t cipher1);
 
-void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c, unsigned long cl);
+void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c);
 
-void pcs_t_encrypt(pcs_t_public_key *pk, mpz_t rop, mpz_t plain1);
+void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
 
 pcs_t_auth_server* pcs_t_init_auth_server(void);
 

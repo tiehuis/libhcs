@@ -165,7 +165,7 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_ra
      * if this is the rounded value or not. i.e. is (1,3) system okay?
      * 3 / 2 = 1 by truncation >= 1. Need to confirm if this is allowed, or
      * more traditional rounding should be applied. */
-    assert(l / 2 <= w && w <= l);
+    //assert(l / 2 <= w && w <= l);
 
     mpz_t t1, t2;
     mpz_init(t1);

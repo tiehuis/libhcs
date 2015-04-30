@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <hcs.h>
 
-#define MODULUS_BITS 16
+#define MODULUS_BITS 512
 #define AU_COUNT 5
-#define AU_REQ 3
+#define AU_REQ 2
 
 int main(int argc, char *argv[])
 {
@@ -46,6 +46,11 @@ int main(int argc, char *argv[])
     }
 
     gmp_printf("Input value %Zd\n", a);
+
+    gmp_printf("SHARES\n");
+    for (int i = 0; i < AU_COUNT; ++i)
+        gmp_printf("%Zd\n\n", fshr[i]);
+    printf("\n");
 
 #define CLEAR_TABLE(v)\
     for (int i = 0; i < AU_COUNT; ++i) mpz_set_ui(v[i], 0)
@@ -97,6 +102,14 @@ int main(int argc, char *argv[])
     mpz_set(cshr[3], fshr[3]);
     pcs_t_share_combine(vk, b, cshr);
     printf("Using 2 servers: 1, 3\n");
+    gmp_printf("Output: %Zd\n\n", b);
+
+    CLEAR_TABLE(cshr);
+    mpz_set(cshr[3], fshr[3]);
+    mpz_set(cshr[2], fshr[3]);
+    mpz_set(cshr[1], fshr[1]);
+    pcs_t_share_combine(vk, b, cshr);
+    printf("Using 1 servers: 3\n");
     gmp_printf("Output: %Zd\n\n", b);
 
     mpz_clear(a);

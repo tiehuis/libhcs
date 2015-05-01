@@ -11,6 +11,7 @@
 #define PCS_H
 
 #include <gmp.h>
+#include "hcs_rand.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,7 +65,7 @@ typedef struct {
  * @param vk An initialised pointer to a pcs_private_key.
  * @param bits The required number of bits the modulus n will be.
  */
-void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits);
+void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, hcs_rand *hr, const unsigned long bits);
 
 /**
  * @brief Encrypt a plaintext value and set @p rop to the encrypted result.
@@ -76,7 +77,7 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsign
  * @param rop Where the encrypted result is stored.
  * @param plain1 The value which is to be encrypted.
  */
-void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1);
+void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
 
 /**
  * @brief Decrypt a ciphertext value and set @p rop to the decrypted result.
@@ -101,7 +102,7 @@ void pcs_decrypt(pcs_private_key *vk, mpz_t rop, mpz_t cipher1);
  * @param rop The variable to store the encrypted result.
  * @param op The value to reencrypt.
  */
-void pcs_reencrypt(pcs_public_key *pk, mpz_t rop, mpz_t op);
+void pcs_reencrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op);
 
 /**
  * @brief Add a plaintext value to an encrypted value.

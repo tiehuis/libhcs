@@ -7,6 +7,7 @@
 #include <string.h>
 #include <gmp.h>
 #include "com/util.h"
+#include "hcs_rand.h"
 #include "djcs.h"
 
 /*
@@ -62,16 +63,11 @@ static void dlog_s(djcs_private_key *vk, mpz_t rop, mpz_t op)
 }
 
 /* Key encryption functions */
-void djcs_encrypt(djcs_public_key *pk, mpz_t rop, mpz_t plain1)
+void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1; mpz_init(t1);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(t1, 256);
-    gmp_randseed(rstate, t1);
-
-    mpz_random_in_mult_group(t1, rstate, pk->n[0]);
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n[0]);
 
     /* E(i,r) = g^i r^(n^s) mod (n^s+1) */
     mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
@@ -79,7 +75,6 @@ void djcs_encrypt(djcs_public_key *pk, mpz_t rop, mpz_t plain1)
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n[pk->s]);
 
-    gmp_randclear(rstate);
     mpz_zero(t1); mpz_clear(t1);
 }
 
@@ -115,19 +110,14 @@ void djcs_ep_mul(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
 }
 
 /* Key generation functions */
-void djcs_generate_key_pair(unsigned long s, djcs_public_key *pk, djcs_private_key *vk, unsigned long bits)
+void djcs_generate_key_pair(unsigned long s, djcs_public_key *pk, djcs_private_key *vk, hcs_rand *hr, unsigned long bits)
 {
     mpz_t p, q; mpz_inits(p, q, NULL);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(p, 256);
-    gmp_randseed(rstate, p);
-
     /* Compute two bits/2 primes. The product is then > 'bits' bits. It can range from
      * [bits + 1, bits] */
-    mpz_random_prime(p, rstate, 1 + (bits-1)/2);
-    mpz_random_prime(q, rstate, 1 + (bits-1)/2);
+    mpz_random_prime(p, hr->rstate, 1 + (bits-1)/2);
+    mpz_random_prime(q, hr->rstate, 1 + (bits-1)/2);
 
     pk->n = malloc(sizeof(mpz_t) * (s + 1));
     vk->n = malloc(sizeof(mpz_t) * (s + 1));
@@ -156,7 +146,6 @@ void djcs_generate_key_pair(unsigned long s, djcs_public_key *pk, djcs_private_k
     dlog_s(vk, vk->mu, vk->mu);
     mpz_invert(vk->mu, vk->mu, vk->n[vk->s-1]);
 
-    gmp_randclear(rstate);
     mpz_zeros(p, q, NULL);
 }
 

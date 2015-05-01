@@ -51,21 +51,17 @@
 #include <gmp.h>
 #include "com/tpl.h"
 #include "com/util.h"
+#include "hcs_rand.h"
 #include "pcs.h"
 
-void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
+void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(t1, PCS_SEED_BITS);
-    gmp_randseed(rstate, t1);
-
     /* Generate a random r in Zn*. This is very likely to pass on the first time
      * as n is comprised of two large prime factors n = p*q, p != q */
-    mpz_random_in_mult_group(t1, rstate, pk->n);
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n);
 
     /* g^m * r^n mod n^2 = (g^m mod n^2) * (r^n mod n^2) mod n^2 */
     mpz_powm(t1, t1, pk->n, pk->n2);
@@ -73,7 +69,6 @@ void pcs_encrypt(pcs_public_key *pk, mpz_t rop, mpz_t plain1)
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 
-    gmp_randclear(rstate);
     mpz_clear(t1);
 }
 
@@ -104,22 +99,16 @@ void pcs_decrypt(pcs_private_key *vk, mpz_t rop, mpz_t cipher1)
     mpz_clear(t2);
 }
 
-void pcs_reencrypt(pcs_public_key *pk, mpz_t rop, mpz_t op)
+void pcs_reencrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
 {
     mpz_t t1;
     mpz_init(t1);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(t1, PCS_SEED_BITS);
-    gmp_randseed(rstate, t1);
-
-    mpz_random_in_mult_group(t1, rstate, pk->n);
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n);
     mpz_powm(t1, t1, pk->n, pk->n2);
     mpz_mul(rop, op, t1);
     mpz_mod(rop, rop, pk->n2);
 
-    gmp_randclear(rstate);
     mpz_clear(t1);
 }
 
@@ -148,20 +137,15 @@ void pcs_ep_mul(pcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
     mpz_powm(rop, cipher1, plain1, pk->n2);
 }
 
-void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsigned long bits)
+void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, hcs_rand *hr, const unsigned long bits)
 {
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(vk->p, PCS_SEED_BITS);
-    gmp_randseed(rstate, vk->p);
-
     /* To generate n as 'bits' bits, we generate two primes of length bits/2 and take the
      * product. This ensures that n is in the range [bits, bits+1]. We do not want p and q
      * to be the same prime, so ensure they are not. This is very very unlikely as bits
      * gets large. */
     do {
-        mpz_random_prime(vk->p, rstate, 1 + (bits-1)/2);
-        mpz_random_prime(vk->q, rstate, 1 + (bits-1)/2);
+        mpz_random_prime(vk->p, hr->rstate, 1 + (bits-1)/2);
+        mpz_random_prime(vk->q, hr->rstate, 1 + (bits-1)/2);
     } while (mpz_cmp(vk->p, vk->q) == 0);
 
     /* Calculate private key values under the assumption that our primes are of similar
@@ -215,8 +199,6 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, const unsign
     mpz_sub_ui(vk->hq, vk->hq, 1);
     mpz_tdiv_q(vk->hq, vk->hq, vk->q);
     mpz_invert(vk->hq, vk->hq, vk->q);
-
-    gmp_randclear(rstate);
 }
 
 /* Sanity checks for use when importing keys */

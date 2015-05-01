@@ -1,6 +1,8 @@
 #ifndef HCS_RAND
 #define HCS_RAND
 
+#include <gmp.h>
+
 typedef struct {
     gmp_randstate_t rstate;
 } hcs_rand;

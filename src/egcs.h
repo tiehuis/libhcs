@@ -25,10 +25,10 @@ egcs_public_key*  egcs_init_public_key(void);
 egcs_private_key* egcs_init_private_key(void);
 egcs_cipher* egcs_init_cipher(void);
 
-void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, int bits);
+void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, hcs_rand *hr, int bits);
 
 /* Encrypt a message */
-void egcs_encrypt(egcs_public_key *pk, egcs_cipher *rop, mpz_t plain1);
+void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop, mpz_t plain1);
 void egcs_decrypt(egcs_private_key *vk, mpz_t rop, egcs_cipher *cipher1);
 
 /* Alter an encrypted message */

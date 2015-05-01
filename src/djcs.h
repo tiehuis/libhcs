@@ -2,6 +2,7 @@
 #define DJCS_H
 
 #include <gmp.h>
+#include "hcs_rand.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,10 +29,10 @@ djcs_public_key*  djcs_init_public_key(void);
 djcs_private_key* djcs_init_private_key(void);
 
 /* Key generation */
-void djcs_generate_key_pair(unsigned long s, djcs_public_key *pk, djcs_private_key *vk, unsigned long bits);
+void djcs_generate_key_pair(unsigned long s, djcs_public_key *pk, djcs_private_key *vk, hcs_rand *hr, unsigned long bits);
 
 /* Encrypt a message */
-void djcs_encrypt(djcs_public_key *pk, mpz_t rop, mpz_t plain1);
+void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
 void djcs_decrypt(djcs_private_key *vk, mpz_t rop, mpz_t cipher1);
 
 /* Alter an encrypted message */

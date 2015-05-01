@@ -20,17 +20,19 @@
 
 static pcs_public_key *server_pk;
 static pcs_private_key *server_vk;
+static hcs_rand *server_hr;
 static mpz_t candidates[candidate_count];
 
 void server_init(void)
 {
     server_pk = pcs_init_public_key();
     server_vk = pcs_init_private_key();
-    pcs_generate_key_pair(server_pk, server_vk, key_modulus_size);
+    server_hr = hcs_rand_init(5);
+    pcs_generate_key_pair(server_pk, server_vk, server_hr, key_modulus_size);
 
     for (int i = 0; i < candidate_count; ++i) {
         mpz_init(candidates[i]);
-        pcs_encrypt(server_pk, candidates[i], candidates[i]);
+        pcs_encrypt(server_pk, server_hr, candidates[i], candidates[i]);
     }
 
     srand(time(NULL));
@@ -89,7 +91,7 @@ int main(void)
         for (int j = 0; j < candidate_count; ++j) {
             mpz_set_ui(value, rand() & 1);
             gmp_printf("\tCandidate %-3d: (%d) encrypting vote %Zd: ", j, i, value);
-            pcs_encrypt(server_pk, value, value);
+            pcs_encrypt(server_pk, server_hr, value, value);
             gmp_printf("%Zd\n", value);
 
             /* Make a request now we have secured our vote */

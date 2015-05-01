@@ -144,7 +144,7 @@ void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, co
 
 mpz_t* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
 {
-    mpz_t *coeff = malloc(sizeof(pcs_t_poly) * vk->w);
+    mpz_t *coeff = malloc(sizeof(mpz_t) * vk->w);
     if (coeff == NULL) return NULL;
 
     mpz_init_set(coeff[0], vk->d);

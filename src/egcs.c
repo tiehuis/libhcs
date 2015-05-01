@@ -1,32 +1,27 @@
 #include <stdio.h>
 #include <gmp.h>
 #include "com/util.h"
+#include "hcs_rand.h"
 #include "egcs.h"
 
-void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, int bits)
+void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk, hcs_rand *hr, int bits)
 {
     mpz_t t;
     mpz_init(t);
 
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    mpz_seed(t, 256);
-    gmp_randseed(rstate, t);
-
     /* Generate a prime number which will be the size of our group */
-    mpz_random_prime(pk->q, rstate, bits);
+    mpz_random_prime(pk->q, hr->rstate, bits);
 
     /* Construct h = g ^ x */
     mpz_sub_ui(pk->q, pk->q, 1);
-    mpz_urandomm(pk->g, rstate, pk->q); /* g and x are both values in q */
-    mpz_urandomm(vk->x, rstate, pk->q); /* Construct a random x */
+    mpz_urandomm(pk->g, hr->rstate, pk->q); /* g and x are both values in q */
+    mpz_urandomm(vk->x, hr->rstate, pk->q); /* Construct a random x */
     mpz_add_ui(pk->q, pk->q, 1);
     mpz_add_ui(pk->g, pk->g, 1);
     mpz_add_ui(vk->x, vk->x, 1);
     mpz_powm(pk->h, pk->g, vk->x, pk->q);
     mpz_set(vk->q, pk->q);  // Problem here
 
-    gmp_randclear(rstate);
     mpz_clear(t);
 }
 
@@ -51,18 +46,13 @@ egcs_cipher* egcs_init_cipher(void)
     return ct;
 }
 
-void egcs_encrypt(egcs_public_key *pk, egcs_cipher *rop, mpz_t plain1)
+void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop, mpz_t plain1)
 {
     mpz_t t; mpz_init(t);
-    mpz_seed(t, 256);
-
-    gmp_randstate_t rstate;
-    gmp_randinit_default(rstate);
-    gmp_randseed(rstate, t);
 
     /* Get random value for encryption */
     mpz_sub_ui(pk->q, pk->q, 1);
-    mpz_urandomm(t, rstate, pk->q);
+    mpz_urandomm(t, hr->rstate, pk->q);
     mpz_add_ui(t, t, 1);
     mpz_add_ui(pk->q, pk->q, 1);
 
@@ -72,7 +62,6 @@ void egcs_encrypt(egcs_public_key *pk, egcs_cipher *rop, mpz_t plain1)
     mpz_mul(rop->c2, rop->c2, plain1);
     mpz_mod(rop->c2, rop->c2, pk->q);
 
-    gmp_randclear(rstate);
     mpz_zero(t); mpz_clear(t);
 }
 

@@ -17,14 +17,6 @@
 extern "C" {
 #endif
 
-/** The number of bits gathered for seeding the prng */
-#define PCS_T_SEED_BITS 256
-
-typedef struct {
-    mpz_t *coeff;
-    unsigned long w;
-} pcs_t_poly;
-
 typedef struct {
     mpz_t si;
     unsigned long i;
@@ -43,7 +35,6 @@ typedef struct {
  * @brief The type for a private key, for use with the Paillier system.
  */
 typedef struct {
-    /* Potentially public */
     unsigned long w;    /**< The number of servers req to successfully decrypt */
     unsigned long l;    /**< The number of decryption servers */
     mpz_t delta;        /**< Precomputation: l! */

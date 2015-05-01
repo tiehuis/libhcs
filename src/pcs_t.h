@@ -21,7 +21,13 @@ extern "C" {
 #define PCS_T_SEED_BITS 256
 
 typedef struct {
+    mpz_t *coeff;
+    unsigned long w;
+} pcs_t_poly;
+
+typedef struct {
     mpz_t si;
+    unsigned long i;
 } pcs_t_auth_server;
 
 /**
@@ -37,7 +43,6 @@ typedef struct {
  * @brief The type for a private key, for use with the Paillier system.
  */
 typedef struct {
-    mpz_t *mm;
     /* Potentially public */
     unsigned long w;    /**< The number of servers req to successfully decrypt */
     unsigned long l;    /**< The number of decryption servers */
@@ -56,10 +61,15 @@ typedef struct {
     mpz_t nm;          /**< Precomputation: n * m */
 } pcs_t_private_key;
 
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, const unsigned long x);
+mpz_t* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr);
+void pcs_t_free_polynomial(pcs_t_private_key *vk, mpz_t *coeff);
+
+void pcs_t_set_auth_server(pcs_t_auth_server *au, mpz_t si, unsigned long i);
+
 void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_rand *hr,
         const unsigned long bits, const unsigned long l, const unsigned long w);
 
-void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigned long i);
 
 void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
         mpz_t rop, mpz_t cipher1);

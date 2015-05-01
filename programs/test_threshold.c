@@ -28,11 +28,19 @@ int main(int argc, char *argv[])
     pcs_t_generate_key_pair(pk, vk, hr, MODULUS_BITS, AU_REQ, AU_COUNT);
     pcs_t_encrypt(pk, hr, b, a);
 
+    mpz_t *coeff = pcs_t_init_polynomial(vk, hr);
+
     /* Set up all auth servers with the given vk values. This will
      * generate a secret share for each server and also set the verification
      * value assigned to it in vk. */
-    for (int i = 0; i < AU_COUNT; ++i)
-        pcs_t_set_auth_server(vk, au[i], i);
+    for (int i = 0; i < AU_COUNT; ++i) {
+        /* Polynomial is only on one machine. Server must request over network value
+         * of polynomial and are sent an index and corresponding value. */
+        pcs_t_compute_polynomial(vk, coeff, au[i]->si, i);
+        pcs_t_set_auth_server(au[i], au[i]->si, i);
+    }
+
+    pcs_t_free_polynomial(vk, coeff);
 
     /* Intialise a table to store the shares that are decrypted
      * by each individual server. */
@@ -119,6 +127,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < AU_COUNT; ++i) {
         pcs_t_free_auth_server(au[i]);
         mpz_clear(fshr[i]);
+        mpz_clear(cshr[i]);
     }
 
     hcs_rand_free(hr);

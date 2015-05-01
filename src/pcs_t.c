@@ -126,17 +126,17 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
     mpz_clear(t3);
 }
 
-static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned long v)
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, const unsigned long x)
 {
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
     /* Compute a polynomial with random coefficients in nm */
-    mpz_set(rop, vk->mm[0]);
+    mpz_set(rop, coeff[0]);
     for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_ui_pow_ui(t1, v, i);
-        mpz_mul(t1, t1, vk->mm[i]);
+        mpz_ui_pow_ui(t1, x + 1, i); /* Correct for assumed 0-indexing of servers */
+        mpz_mul(t1, t1, coeff[i]);
         mpz_add(rop, rop, t1);
         mpz_mod(rop, rop, vk->nm);
     }
@@ -145,15 +145,36 @@ static void polynomial_function(pcs_t_private_key *vk, mpz_t rop, const unsigned
     mpz_clear(t2);
 }
 
+mpz_t* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
+{
+    mpz_t *coeff = malloc(sizeof(pcs_t_poly) * vk->w);
+    if (coeff == NULL) return NULL;
+
+    mpz_init_set(coeff[0], vk->d);
+    for (unsigned long i = 1; i < vk->w; ++i) {
+        mpz_init(coeff[i]);
+        mpz_urandomm(coeff[i], hr->rstate, vk->nm);
+    }
+
+    return coeff;
+}
+
+void pcs_t_free_polynomial(pcs_t_private_key *vk, mpz_t *coeff)
+{
+    for (unsigned long i = 0; i < vk->w; ++i) {
+        mpz_clear(coeff[i]);
+    }
+    free(coeff);
+}
+
 /* Maybe change the arguments passed to this to avoid an individual tampering with
  * the results. One should calculate their verification and send that to the central
  * party, not modify the private key themselves. Keep this as is now though for
  * simplicity in a local example. */
-void pcs_t_set_auth_server(pcs_t_private_key *vk, pcs_t_auth_server *au, unsigned long i)
+void pcs_t_set_auth_server(pcs_t_auth_server *au, mpz_t si, unsigned long i)
 {
-    polynomial_function(vk, au->si, i + 1);
-    mpz_mul(vk->vi[i], vk->delta, au->si);
-    mpz_powm(vk->vi[i], vk->v, vk->vi[i], vk->n2);
+    mpz_set(au->si, si);
+    au->i = i + 1; /* Assume 0-index and correct internally. */
 }
 
 /* Look into methods of using multiparty computation to generate these keys and
@@ -222,13 +243,6 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_ra
      * always cyclic of order n * p' * q' since n is a safe prime product. */
     mpz_set(vk->v, vk->ph);
 
-    vk->mm = malloc(sizeof(mpz_t) * vk->w);
-    mpz_init_set(vk->mm[0], vk->d);
-    for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_init(vk->mm[i]);
-        mpz_urandomm(vk->mm[i], hr->rstate, vk->nm);
-    }
-
     mpz_clear(t1);
     mpz_clear(t2);
     printf("\n");
@@ -283,8 +297,9 @@ void pcs_t_free_private_key(pcs_t_private_key *vk)
              vk->v, vk->nm, vk->m,
              vk->n, vk->n2, vk->d, vk->delta, NULL);
 
-    for (unsigned long i = 0; i < vk->w; ++i)
+    for (unsigned long i = 0; i < vk->l; ++i)
         mpz_clear(vk->vi[i]);
+
     free(vk->vi);
     free(vk);
 }

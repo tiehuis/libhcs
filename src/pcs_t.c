@@ -100,8 +100,6 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
             mpz_mul_ui(t1, t1, j + 1);
         }
 
-        gmp_printf("lambda = %Zd\n", t1);
-
         mpz_abs(t2, t1);
         mpz_mul_ui(t2, t2, 2);
         mpz_powm(t2, c[i], t2, vk->n2);
@@ -117,7 +115,6 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
     mpz_pow_ui(t1, vk->delta, 2);
     mpz_mul_ui(t1, t1, 4);
     assert(mpz_invert(t1, t1, vk->n)); // assume this inverse exists for now, add a check
-    gmp_printf("delta^-1 = %Zd\n", t1);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, vk->n);
 
@@ -212,21 +209,15 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_ra
     /* Compute m = ph * qh */
     mpz_mul(vk->m, vk->ph, vk->qh);
 
-    gmp_printf("m = %Zd = %Zd*%Zd\nn = %Zd = %Zd*%Zd\n", vk->m, vk->ph, vk->qh, vk->n, vk->p, vk->q);
-
     /* d == 1 mod n and d == 0 mod m */
     mpz_set_ui(t1, 1);
     mpz_set_ui(t2, 0);
     mpz_2crt(vk->d, t1, vk->n, t2, vk->m);
-    gmp_printf("x = %Zd (mod %Zd)\nx = %Zd (mod %Zd)\n", t1, vk->n, t2, vk->m);
-    gmp_printf("d = %Zd\n", vk->d);
 
     /* Compute n^2 * m */
     mpz_mul(vk->nm, vk->n, vk->m);
-    gmp_printf("nm = %Zd\nn^2 = %Zd\n", vk->nm, vk->n2);
 
     /* Set l and w in private key */
-    printf("l = %lu\nw = %lu\n", l, w);
     vk->l = l;
     vk->w = w;
 
@@ -237,7 +228,6 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_ra
 
     /* Precompute delta = l! */
     mpz_fac_ui(vk->delta, vk->l);
-    gmp_printf("delta = %Zd\n", vk->delta);
 
     /* Compute v being a cyclic generator of squares. This group is
      * always cyclic of order n * p' * q' since n is a safe prime product. */
@@ -245,7 +235,6 @@ void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_ra
 
     mpz_clear(t1);
     mpz_clear(t2);
-    printf("\n");
 }
 
 pcs_t_auth_server* pcs_t_init_auth_server(void)

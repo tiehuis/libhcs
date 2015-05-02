@@ -5,14 +5,16 @@
  *
  * Implementation of the Paillier Cryptosystem (pcs_t).
  *
- * This scheme is a threshold variant of the Paillier system. It loosely follows
- * the scheme presented in the paper by damgard-jurik, but with a chosen base of
- * 2, rather than the variable s+1. This scheme was written first for simplicity.
+ * This scheme is a threshold variant of the Paillier system. It loosely
+ * follows the scheme presented in the paper by damgard-jurik, but with a
+ * chosen base of 2, rather than the variable s+1. This scheme was written
+ * first for simplicity.
  *
  * POSSIBLE IMPROVEMENTS:
  *
- *  - Rewrite all assertions as checks that return error codes instead. We don't
- *    want to crash and instead want to relay this information to the caller.
+ *  - Rewrite all assertions as checks that return error codes instead. We
+ *    don't want to crash and instead want to relay this information to the
+ *    caller.
  */
 
 #include <assert.h>
@@ -23,8 +25,7 @@
 #include "com/util.h"
 #include "pcs_t.h"
 
-/* This is much simpler for the paillier scheme and is simply
- * a computation of L(x) */
+/* This is simply L(x) when s = 1 */
 static void dlog_s(pcs_t_private_key *vk, mpz_t rop, mpz_t op)
 {
     mpz_sub_ui(rop, op, 1);
@@ -59,7 +60,7 @@ static int dlog_equality(mpz_t u, mpz_t uh, mpz_t v, mpz_t vh)
 /* Compute a servers share and set rop to the result. rop should usually
  * be part of an array so we can call pcs_t_share_combine with ease. */
 void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
-        mpz_t rop, mpz_t cipher1)
+                         mpz_t rop, mpz_t cipher1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -71,8 +72,8 @@ void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
     mpz_clear(t1);
 }
 
-/* Also need to label the index of the servers that are being used. Unused shares
- * must be set to value 0. */
+/* c is expected to be of length vk->l, the number of servers. If the share
+ * is not present, then it is expected to be equal to the value zero. */
 void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
 {
     mpz_t t1, t2, t3;
@@ -80,15 +81,14 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
     mpz_init(t2);
     mpz_init(t3);
 
-    /* Could alter loop to choose a random subset instead of always 0-indexing. */
     mpz_set_ui(rop, 1);
     for (unsigned long i = 0; i < vk->l; ++i) {
 
+        /* Skip zero shares */
         if (mpz_cmp_ui(c[i], 0) == 0)
-            continue; /* This share adds zero to the sum so skip. */
+            continue;
 
-        /* Compute lambda_{0,i}^S. This is computed using the values of the
-         * shares, not the indices? */
+        /* Compute lagrange coefficients */
         mpz_set(t1, vk->delta);
         for (unsigned long j = 0; j < vk->l; ++j) {
             if ((j == i) || mpz_cmp_ui(c[j], 0) == 0)
@@ -108,13 +108,11 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
         mpz_mod(rop, rop, vk->n2);
     }
 
-    /* We now have c', so use algorithm from Theorem 1 to derive the result */
+    /* rop = c' */
     dlog_s(vk, rop, rop);
-
-    /* Multiply by (4*delta^2)^-1 mod n^2 to get result */
     mpz_pow_ui(t1, vk->delta, 2);
     mpz_mul_ui(t1, t1, 4);
-    assert(mpz_invert(t1, t1, vk->n)); // assume this inverse exists for now, add a check
+    assert(mpz_invert(t1, t1, vk->n));  // This is always true
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, vk->n);
 
@@ -123,16 +121,16 @@ void pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c)
     mpz_clear(t3);
 }
 
-void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, const unsigned long x)
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop,
+                              const unsigned long x)
 {
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
-    /* Compute a polynomial with random coefficients in nm */
     mpz_set(rop, coeff[0]);
     for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_ui_pow_ui(t1, x + 1, i); /* Correct for assumed 0-indexing of servers */
+        mpz_ui_pow_ui(t1, x + 1, i);        // Correct for server 0-indexing
         mpz_mul(t1, t1, coeff[i]);
         mpz_add(rop, rop, t1);
         mpz_mod(rop, rop, vk->nm);
@@ -158,80 +156,57 @@ mpz_t* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
 
 void pcs_t_free_polynomial(pcs_t_private_key *vk, mpz_t *coeff)
 {
-    for (unsigned long i = 0; i < vk->w; ++i) {
+    for (unsigned long i = 0; i < vk->w; ++i)
         mpz_clear(coeff[i]);
-    }
     free(coeff);
 }
 
-/* Maybe change the arguments passed to this to avoid an individual tampering with
- * the results. One should calculate their verification and send that to the central
- * party, not modify the private key themselves. Keep this as is now though for
- * simplicity in a local example. */
+/* Maybe change the arguments passed to this to avoid an individual tampering
+ * with the results. One should calculate their verification and send that to
+ * the central party, not modify the private key themselves. Keep this as is
+ * now though for simplicity in a local example. */
 void pcs_t_set_auth_server(pcs_t_auth_server *au, mpz_t si, unsigned long i)
 {
     mpz_set(au->si, si);
-    au->i = i + 1; /* Assume 0-index and correct internally. */
+    au->i = i + 1; // Input is assumed to be 0-indexed (from array)
 }
 
-/* Look into methods of using multiparty computation to generate these keys and
- * the data such that we don't have to have a trusted party for generation. */
-void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk, hcs_rand *hr,
-        const unsigned long bits, const unsigned long w, const unsigned long l)
+/* Look into methods of using multiparty computation to generate these keys
+ * and the data so we don't have to have a trusted party for generation. */
+void pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
+        hcs_rand *hr, const unsigned long bits, const unsigned long w,
+        const unsigned long l)
 {
-    /* We can only perform this encryption if we have a w >= l / 2. Unsure
-     * if this is the rounded value or not. i.e. is (1,3) system okay?
-     * 3 / 2 = 1 by truncation >= 1. Need to confirm if this is allowed, or
-     * more traditional rounding should be applied. */
+    /* The paper does describe some bounds on w, l */
     //assert(l / 2 <= w && w <= l);
 
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
-    /* Choose p and q to be safe primes */
     do {
         mpz_random_safe_prime(vk->p, vk->qh, hr->rstate, 1 + (bits-1)/2);
         mpz_random_safe_prime(vk->q, vk->ph, hr->rstate, 1 + (bits-1)/2);
     } while (mpz_cmp(vk->p, vk->q) == 0);
 
-    /* n = p * q */
     mpz_mul(pk->n, vk->p, vk->q);
     mpz_set(vk->n, pk->n);
-
-    /* n^2 = n * n */
     mpz_pow_ui(pk->n2, pk->n, 2);
     mpz_set(vk->n2, pk->n2);
-
-    /* g = n + 1 */
     mpz_add_ui(pk->g, pk->n, 1);
-
-    /* Compute m = ph * qh */
     mpz_mul(vk->m, vk->ph, vk->qh);
-
-    /* d == 1 mod n and d == 0 mod m */
     mpz_set_ui(t1, 1);
     mpz_set_ui(t2, 0);
     mpz_2crt(vk->d, t1, vk->n, t2, vk->m);
-
-    /* Compute n^2 * m */
     mpz_mul(vk->nm, vk->n, vk->m);
+    mpz_fac_ui(vk->delta, l);
+    mpz_set(vk->v, vk->ph);
 
-    /* Set l and w in private key */
     vk->l = l;
     vk->w = w;
-
-    /* Allocate space for verification values */
     vk->vi = malloc(sizeof(mpz_t) * l);
     for (unsigned long i = 0; i < l; ++i)
         mpz_init(vk->vi[i]);
-
-    /* Precompute delta = l! */
-    mpz_fac_ui(vk->delta, vk->l);
-
-    /* Compute v being a cyclic generator of squares. This group is
-     * always cyclic of order n * p' * q' since n is a safe prime product. */
-    mpz_set(vk->v, vk->ph);
 
     mpz_clear(t1);
     mpz_clear(t2);
@@ -261,10 +236,8 @@ pcs_t_private_key* pcs_t_init_private_key(void)
     if (!vk) return NULL;
 
     vk->w = vk->l = 0;
-    mpz_inits(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->nm, vk->m,
-             vk->n, vk->n2, vk->d, vk->delta, NULL);
-
+    mpz_inits(vk->p, vk->ph, vk->q, vk->qh, vk->v, vk->nm, vk->m, vk->n,
+              vk->n2, vk->d, vk->delta, NULL);
     return vk;
 }
 
@@ -282,13 +255,11 @@ void pcs_t_free_public_key(pcs_t_public_key *pk)
 
 void pcs_t_free_private_key(pcs_t_private_key *vk)
 {
-    mpz_clears(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->nm, vk->m,
-             vk->n, vk->n2, vk->d, vk->delta, NULL);
+    mpz_clears(vk->p, vk->ph, vk->q, vk->qh, vk->v, vk->nm, vk->m, vk->n,
+               vk->n2, vk->d, vk->delta, NULL);
 
     for (unsigned long i = 0; i < vk->l; ++i)
         mpz_clear(vk->vi[i]);
-
     free(vk->vi);
     free(vk);
 }

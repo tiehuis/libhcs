@@ -1,3 +1,8 @@
+/**
+ * @file hcs_rand.h
+ * #@brief header file for the random state used in this library
+ */
+
 #ifndef HCS_RAND
 #define HCS_RAND
 
@@ -8,6 +13,7 @@ typedef struct {
 } hcs_rand;
 
 hcs_rand* hcs_rand_init(const unsigned long v);
+
 void hcs_rand_free(hcs_rand *hr);
 
 #endif

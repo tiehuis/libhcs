@@ -308,7 +308,7 @@ djcs_t_private_key* djcs_t_init_private_key(void)
     djcs_t_private_key *vk = malloc(sizeof(djcs_t_private_key));
     if (!vk) return NULL;
 
-    vk->w = vk->l = 0;
+    vk->w = vk->l = vk->s = 0;
     mpz_inits(vk->p, vk->ph, vk->q, vk->qh,
              vk->v, vk->nsm, vk->m,
              vk->d, vk->delta, NULL);

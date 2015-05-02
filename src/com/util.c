@@ -83,10 +83,10 @@ void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op)
     mpz_clear(t1);
 }
 
-/* Generate a random prime of minimum bitcnt number of bits. Currently this doesn't
- * have any other requirements. Strong primes or anything generally are not
- * seen as too useful now, as newer factorization schemes such as the GFNS
- * are not disrupted by this prime choice. */
+/* Generate a random prime of minimum bitcnt number of bits. Currently this
+ * doesn't have any other requirements. Strong primes or anything generally
+ * are not seen as too useful now, as newer factorization schemes such as the
+ * GFNS are not disrupted by this prime choice. */
 void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
     /* Technically in small cases we could get a prime of n + 1 bits */
@@ -95,8 +95,10 @@ void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
     mpz_nextprime(rop, rop);
 }
 
-/* Generate a prime rop1 which is equal to 2 * rop2 + 1 where rop2 is also prime */
-void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+/* Generate a prime rop1 which is equal to 2 * rop2 + 1 where rop2 is also
+ * prime */
+void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+                           mp_bitcnt_t bitcnt)
 {
     do {
         mpz_random_prime(rop1, rstate, bitcnt);
@@ -105,16 +107,11 @@ void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate, mp_bi
     } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
 
-/* Generate a random dsa_prime and set rop to the result. Currently not implemented. */
-void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
-{
-    mpz_random_prime(rop, rstate, bitcnt);
-}
-
-/* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike other
- * mpz functions rop must not be an aliased with any of the other arguments!
- * This is done to save excessive copying in this function, plus it is usually
- * not beneficial as conX_a and conX_m cannot be the same value anyway */
+/* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike
+ * other mpz functions rop must not be an aliased with any of the other
+ * arguments! This is done to save excessive copying in this function, plus
+ * it is usually not beneficial as conX_a and conX_m cannot be the same value
+ * anyway */
 void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
 {
     mpz_t t;

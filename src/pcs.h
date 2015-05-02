@@ -2,7 +2,8 @@
  * @file pcs.h
  * @author Marc Tiehuis
  * @date 15 March 2015
- * @brief Header containing function and type definitions for the Paillier cryptosystem.
+ * @brief Header containing function and type definitions for the Paillier
+ * cryptosystem.
  *
  * A more detailed look at the internals can be found in pcs.c
  */
@@ -48,9 +49,9 @@ typedef struct {
 /**
  * @brief Generate a public and private key pair with a modulus of size bits.
  *
- * Initialise a key pair with modulus size @p bits. It is required that @p pk and
- * @p vk are initialised before calling this function. @p pk and @p vk are also
- * expected to not be NULL.
+ * Initialise a key pair with modulus size @p bits. It is required that @p pk
+ * and @p vk are initialised before calling this function. @p pk and @p vk are
+ * also expected to not be NULL.
  *
  * @code
  * pcs_public_key *pk = pcs_init_public_key();
@@ -65,7 +66,8 @@ typedef struct {
  * @param vk An initialised pointer to a pcs_private_key.
  * @param bits The required number of bits the modulus n will be.
  */
-void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk, hcs_rand *hr, const unsigned long bits);
+void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
+                           hcs_rand *hr, const unsigned long bits);
 
 /**
  * @brief Encrypt a plaintext value and set @p rop to the encrypted result.
@@ -134,9 +136,9 @@ void pcs_ee_add(pcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2);
 /**
  * @brief Multiply a plaintext value with an encrypted value.
  *
- * Multiply a plaintext value @p plain1 with an encrypted value @p cipher1, storing
- * the result in @p rop. All the parameters can be aliased, however, usually
- * only @p rop and @p cipher1 will be.
+ * Multiply a plaintext value @p plain1 with an encrypted value @p cipher1,
+ * storing the result in @p rop. All the parameters can be aliased, however,
+ * usually only @p rop and @p cipher1 will be.
  *
  * @param pk A pointer to an initialised pcs_public_key.
  * @param rop Where the new encrypted result is stored.
@@ -242,14 +244,16 @@ int pcs_import_public_key(pcs_public_key *pk, const char *file);
 int pcs_import_private_key(pcs_private_key *vk, const char *file);
 
 /**
- * @brief Initialise the fields of a public key, returning a pointer to a usable key.
+ * @brief Initialise the fields of a public key, returning a pointer to a
+ * usable key.
  *
  * @return A pointer to an initialised pcs_public_key type.
  */
 pcs_public_key*  pcs_init_public_key(void);
 
 /**
- * @brief Initialise the fields of a private key, returning a pointer to a usable key.
+ * @brief Initialise the fields of a private key, returning a pointer to a
+ * usable key.
  *
  * @return A pointer to an initialised pcs_private_key type.
  */
@@ -266,7 +270,7 @@ pcs_private_key* pcs_init_private_key(void);
  * // ... Initialised a key pk, and done some work with it
  *
  * pcs_clear_public_key(pk); // All data from old key is now gone
- * pcs_import_public_key(pk, "public.key"); // Safe to reuse this key, still initialised
+ * pcs_import_public_key(pk, "public.key"); // Safe to reuse this key
  * @endcode
  *
  * @param pk A pointer to an initialised pcs_public_key.

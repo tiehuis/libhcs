@@ -6,6 +6,7 @@
 #include "pcs2.h"
 #include "pcs_t.h"
 #include "djcs.h"
+#include "djcs_t.h"
 #include "egcs.h"
 
 #endif

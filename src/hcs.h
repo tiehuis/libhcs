@@ -1,3 +1,8 @@
+/**
+ * @file hcs.h
+ * @brief master include file
+ */
+
 #ifndef HCS_H
 #define HCS_H
 

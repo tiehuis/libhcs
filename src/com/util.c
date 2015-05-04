@@ -1,11 +1,5 @@
 /*
  * @file util.c
- * @date 15 March 2015
- * @author Marc Tiehuis
- *
- * This file contains common utility functions that are shared amongst
- * cryptographic schemes. These are mainly additional functions that work
- * on mpz_t types.
  */
 
 #include <assert.h>
@@ -50,20 +44,22 @@ void mpz_zeros(mpz_t op, ...)
 /* Attempts to get n bits of seed data from /dev/urandom. The number of
  * bits is always round up to the nearest 8. Asking for 78 bits of seed
  * will gather 80 bits, for example. */
-void mpz_seed(mpz_t seed, int bits)
+int mpz_seed(mpz_t seed, int bits)
 {
     FILE *fd = fopen("/dev/urandom", "rb");
     if (!fd)
-        err("failed to open /dev/urandom");
+        return HCS_EOPEN;
 
     int bytes = (bits / 8) + 1;
     unsigned char random_bytes[bytes];
     if (fread(random_bytes, sizeof(random_bytes), 1, fd) != 1)
-        err("failed to read from /dev/urandom");
+        return HCS_EREAD;
 
     mpz_import(seed, bytes, 1, sizeof(random_bytes[0]), 0, 0, random_bytes);
     memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
     fclose(fd);
+    
+    return HCS_OK;
 }
 
 /* Generate a random value that is in Z_(op)^*. This simply random chooses

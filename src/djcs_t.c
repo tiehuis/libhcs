@@ -71,21 +71,6 @@ static void dlog_s(djcs_t_private_key *vk, mpz_t rop, mpz_t op)
     mpz_clears(a, t1, t2, t3, kfact, NULL);
 }
 
-
-void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
-{
-    mpz_t t1;
-    mpz_init(t1);
-
-    mpz_random_in_mult_group(t1, hr->rstate, pk->n[pk->s-1]);
-    mpz_powm(rop, t1, pk->n[pk->s-1], pk->n[pk->s]);
-    mpz_powm(t1, pk->g, plain1, pk->n[pk->s]);
-    mpz_mul(rop, rop, t1);
-    mpz_mod(rop, rop, pk->n[pk->s]);
-
-    mpz_clear(t1);
-}
-
 #if 0
 static int dlog_equality(mpz_t u, mpz_t uh, mpz_t v, mpz_t vh)
 {
@@ -96,122 +81,26 @@ static int dlog_equality(mpz_t u, mpz_t uh, mpz_t v, mpz_t vh)
 }
 #endif
 
-/* Compute a servers share and set rop to the result. rop should usually
- * be part of an array so we can call djcs_t_share_combine with ease. */
-void djcs_t_share_decrypt(djcs_t_private_key *vk, djcs_t_auth_server *au,
-        mpz_t rop, mpz_t cipher1)
+djcs_t_public_key* djcs_t_init_public_key(void)
 {
-    mpz_t t1;
-    mpz_init(t1);
+    djcs_t_public_key *pk = malloc(sizeof(djcs_t_public_key));
+    if (!pk) return NULL;
 
-    mpz_mul(t1, au->si, vk->delta);
-    mpz_mul_ui(t1, t1, 2);
-    mpz_powm(rop, cipher1, t1, vk->n[vk->s]);
-
-    mpz_clear(t1);
+    mpz_init(pk->g);
+    return pk;
 }
 
-/* Also need to label the index of the servers that are being used. Unused shares
- * must be set to value 0. */
-void djcs_t_share_combine(djcs_t_private_key *vk, mpz_t rop, mpz_t *c)
+djcs_t_private_key* djcs_t_init_private_key(void)
 {
-    mpz_t t1, t2, t3;
-    mpz_init(t1);
-    mpz_init(t2);
-    mpz_init(t3);
+    djcs_t_private_key *vk = malloc(sizeof(djcs_t_private_key));
+    if (!vk) return NULL;
 
-    /* Could alter loop to choose a random subset instead of always 0-indexing. */
-    mpz_set_ui(rop, 1);
-    for (unsigned long i = 0; i < vk->l; ++i) {
+    vk->w = vk->l = vk->s = 0;
+    mpz_inits(vk->p, vk->ph, vk->q, vk->qh,
+             vk->v, vk->nsm, vk->m,
+             vk->d, vk->delta, NULL);
 
-        if (mpz_cmp_ui(c[i], 0) == 0)
-            continue; /* This share adds zero to the sum so skip. */
-
-        /* Compute lambda_{0,i}^S. This is computed using the values of the
-         * shares, not the indices? */
-        mpz_set(t1, vk->delta);
-        for (unsigned long j = 0; j < vk->l; ++j) {
-            if ((j == i) || mpz_cmp_ui(c[j], 0) == 0)
-                continue; /* i' in S\i and non-zero */
-
-            long v = (long)j - (long)i;
-            mpz_tdiv_q_ui(t1, t1, (v < 0 ? v*-1 : v));
-            if (v < 0) mpz_neg(t1, t1);
-            mpz_mul_ui(t1, t1, j + 1);
-        }
-
-        mpz_abs(t2, t1);
-        mpz_mul_ui(t2, t2, 2);
-        mpz_powm(t2, c[i], t2, vk->n[vk->s]);
-        if (mpz_sgn(t1) < 0) mpz_invert(t2, t2, vk->n[vk->s]);
-        mpz_mul(rop, rop, t2);
-        mpz_mod(rop, rop, vk->n[vk->s]);
-    }
-
-    /* We now have c', so use algorithm from Theorem 1 to derive the result */
-    dlog_s(vk, rop, rop);
-
-    /* Multiply by (4*delta^2)^-1 mod n^2 to get result */
-    mpz_pow_ui(t1, vk->delta, 2);
-    mpz_mul_ui(t1, t1, 4);
-    assert(mpz_invert(t1, t1, vk->n[vk->s-1])); // assume this inverse exists for now, add a check
-    mpz_mul(rop, rop, t1);
-    mpz_mod(rop, rop, vk->n[vk->s-1]);
-
-    mpz_clear(t1);
-    mpz_clear(t2);
-    mpz_clear(t3);
-}
-
-void djcs_t_compute_polynomial(djcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, const unsigned long x)
-{
-    mpz_t t1, t2;
-    mpz_init(t1);
-    mpz_init(t2);
-
-    /* Compute a polynomial with random coefficients in nm */
-    mpz_set(rop, coeff[0]);
-    for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_ui_pow_ui(t1, x + 1, i); /* Correct for assumed 0-indexing of servers */
-        mpz_mul(t1, t1, coeff[i]);
-        mpz_add(rop, rop, t1);
-        mpz_mod(rop, rop, vk->nsm);
-    }
-
-    mpz_clear(t1);
-    mpz_clear(t2);
-}
-
-mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_rand *hr)
-{
-    mpz_t *coeff = malloc(sizeof(mpz_t) * vk->w);
-    if (coeff == NULL) return NULL;
-
-    mpz_init_set(coeff[0], vk->d);
-    for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_init(coeff[i]);
-        mpz_urandomm(coeff[i], hr->rstate, vk->nsm);
-    }
-
-    return coeff;
-}
-
-void djcs_t_free_polynomial(djcs_t_private_key *vk, mpz_t *coeff)
-{
-    for (unsigned long i = 0; i < vk->w; ++i) {
-        mpz_clear(coeff[i]);
-    }
-    free(coeff);
-}
-
-/* Maybe change the arguments passed to this to avoid an individual tampering with
- * the results. One should calculate their verification and send that to the central
- * party, not modify the private key themselves. Keep this as is now though for
- * simplicity in a local example. */
-void djcs_t_set_auth_server(djcs_t_auth_server *au, mpz_t si, unsigned long i)
-{
-    mpz_set(au->si, si);
-    au->i = i + 1; /* Assume 0-index and correct internally. */
+    return vk;
 }
 
 /* Look into methods of using multiparty computation to generate these keys and
@@ -285,6 +174,98 @@ void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk, hcs
     mpz_clear(t2);
 }
 
+void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n[pk->s-1]);
+    mpz_powm(rop, t1, pk->n[pk->s-1], pk->n[pk->s]);
+    mpz_powm(t1, pk->g, plain1, pk->n[pk->s]);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
+}
+
+void djcs_t_reencrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n[0]);
+    mpz_powm(t1, t1, pk->n[pk->s-1], pk->n[pk->s]);
+    mpz_mul(rop, op, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
+}
+
+void djcs_t_ep_add(djcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_set(t1, cipher1);
+    mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
+}
+
+void djcs_t_ee_add(djcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2)
+{
+    mpz_mul(rop, cipher1, cipher2);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+}
+
+void djcs_t_ep_mul(djcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
+{
+    mpz_powm(rop, cipher1, plain1, pk->n[pk->s]);
+}
+
+mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_rand *hr)
+{
+    mpz_t *coeff = malloc(sizeof(mpz_t) * vk->w);
+    if (coeff == NULL) return NULL;
+
+    mpz_init_set(coeff[0], vk->d);
+    for (unsigned long i = 1; i < vk->w; ++i) {
+        mpz_init(coeff[i]);
+        mpz_urandomm(coeff[i], hr->rstate, vk->nsm);
+    }
+
+    return coeff;
+}
+
+void djcs_t_compute_polynomial(djcs_t_private_key *vk, mpz_t *coeff, mpz_t rop, const unsigned long x)
+{
+    mpz_t t1, t2;
+    mpz_init(t1);
+    mpz_init(t2);
+
+    /* Compute a polynomial with random coefficients in nm */
+    mpz_set(rop, coeff[0]);
+    for (unsigned long i = 1; i < vk->w; ++i) {
+        mpz_ui_pow_ui(t1, x + 1, i); /* Correct for assumed 0-indexing of servers */
+        mpz_mul(t1, t1, coeff[i]);
+        mpz_add(rop, rop, t1);
+        mpz_mod(rop, rop, vk->nsm);
+    }
+
+    mpz_clear(t1);
+    mpz_clear(t2);
+}
+
+void djcs_t_free_polynomial(djcs_t_private_key *vk, mpz_t *coeff)
+{
+    for (unsigned long i = 0; i < vk->w; ++i) {
+        mpz_clear(coeff[i]);
+    }
+    free(coeff);
+}
+
 djcs_t_auth_server* djcs_t_init_auth_server(void)
 {
     djcs_t_auth_server *au = malloc(sizeof(djcs_t_auth_server));
@@ -294,26 +275,73 @@ djcs_t_auth_server* djcs_t_init_auth_server(void)
     return au;
 }
 
-djcs_t_public_key* djcs_t_init_public_key(void)
+void djcs_t_set_auth_server(djcs_t_auth_server *au, mpz_t si, unsigned long i)
 {
-    djcs_t_public_key *pk = malloc(sizeof(djcs_t_public_key));
-    if (!pk) return NULL;
-
-    mpz_init(pk->g);
-    return pk;
+    mpz_set(au->si, si);
+    au->i = i + 1; /* Assume 0-index and correct internally. */
 }
 
-djcs_t_private_key* djcs_t_init_private_key(void)
+void djcs_t_share_decrypt(djcs_t_private_key *vk, djcs_t_auth_server *au,
+        mpz_t rop, mpz_t cipher1)
 {
-    djcs_t_private_key *vk = malloc(sizeof(djcs_t_private_key));
-    if (!vk) return NULL;
+    mpz_t t1;
+    mpz_init(t1);
 
-    vk->w = vk->l = vk->s = 0;
-    mpz_inits(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->nsm, vk->m,
-             vk->d, vk->delta, NULL);
+    mpz_mul(t1, au->si, vk->delta);
+    mpz_mul_ui(t1, t1, 2);
+    mpz_powm(rop, cipher1, t1, vk->n[vk->s]);
 
-    return vk;
+    mpz_clear(t1);
+}
+
+void djcs_t_share_combine(djcs_t_private_key *vk, mpz_t rop, mpz_t *c)
+{
+    mpz_t t1, t2, t3;
+    mpz_init(t1);
+    mpz_init(t2);
+    mpz_init(t3);
+
+    /* Could alter loop to choose a random subset instead of always 0-indexing. */
+    mpz_set_ui(rop, 1);
+    for (unsigned long i = 0; i < vk->l; ++i) {
+
+        if (mpz_cmp_ui(c[i], 0) == 0)
+            continue; /* This share adds zero to the sum so skip. */
+
+        /* Compute lambda_{0,i}^S. This is computed using the values of the
+         * shares, not the indices? */
+        mpz_set(t1, vk->delta);
+        for (unsigned long j = 0; j < vk->l; ++j) {
+            if ((j == i) || mpz_cmp_ui(c[j], 0) == 0)
+                continue; /* i' in S\i and non-zero */
+
+            long v = (long)j - (long)i;
+            mpz_tdiv_q_ui(t1, t1, (v < 0 ? v*-1 : v));
+            if (v < 0) mpz_neg(t1, t1);
+            mpz_mul_ui(t1, t1, j + 1);
+        }
+
+        mpz_abs(t2, t1);
+        mpz_mul_ui(t2, t2, 2);
+        mpz_powm(t2, c[i], t2, vk->n[vk->s]);
+        if (mpz_sgn(t1) < 0) mpz_invert(t2, t2, vk->n[vk->s]);
+        mpz_mul(rop, rop, t2);
+        mpz_mod(rop, rop, vk->n[vk->s]);
+    }
+
+    /* We now have c', so use algorithm from Theorem 1 to derive the result */
+    dlog_s(vk, rop, rop);
+
+    /* Multiply by (4*delta^2)^-1 mod n^2 to get result */
+    mpz_pow_ui(t1, vk->delta, 2);
+    mpz_mul_ui(t1, t1, 4);
+    assert(mpz_invert(t1, t1, vk->n[vk->s-1])); // assume this inverse exists for now, add a check
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, vk->n[vk->s-1]);
+
+    mpz_clear(t1);
+    mpz_clear(t2);
+    mpz_clear(t3);
 }
 
 void djcs_t_free_auth_server(djcs_t_auth_server *au)
@@ -322,26 +350,58 @@ void djcs_t_free_auth_server(djcs_t_auth_server *au)
     free(au);
 }
 
+void djcs_t_clear_public_key(djcs_t_public_key *pk)
+{
+    mpz_zero(pk->g);
+}
+
+void djcs_t_clear_private_key(djcs_t_private_key *vk)
+{
+    mpz_zeros(vk->p, vk->ph, vk->q, vk->qh, vk->v, vk->nsm, vk->m,
+              vk->d, vk->delta, NULL);
+
+    if (vk->vi) {
+        for (unsigned long i = 0; i < vk->l; ++i)
+            mpz_clear(vk->vi[i]);
+        free(vk->vi);
+    }
+
+    if (vk->n) {
+        for (unsigned long i = 0; i <= vk->s; ++i)
+            mpz_clear(vk->n[i]);
+        free(vk->n);
+    }
+}
+
 void djcs_t_free_public_key(djcs_t_public_key *pk)
 {
     mpz_clear(pk->g);
 
-    for (unsigned long i = 0; i <= pk->s; ++i)
-        mpz_clear(pk->n[i]);
+    if (pk->n) {
+        for (unsigned long i = 0; i <= pk->s; ++i)
+            mpz_clear(pk->n[i]);
+        free(pk->n);
+    }
+
     free(pk);
 }
 
 void djcs_t_free_private_key(djcs_t_private_key *vk)
 {
-    mpz_clears(vk->p, vk->ph, vk->q, vk->qh,
-             vk->v, vk->nsm, vk->m,
-             vk->d, vk->delta, NULL);
+    mpz_clears(vk->p, vk->ph, vk->q, vk->qh, vk->v, vk->nsm, vk->m,
+               vk->d, vk->delta, NULL);
 
-    for (unsigned long i = 0; i < vk->l; ++i)
-        mpz_clear(vk->vi[i]);
-    for (unsigned long i = 0; i <= vk->s; ++i)
-        mpz_clear(vk->n[i]);
+    if (vk->vi) {
+        for (unsigned long i = 0; i < vk->l; ++i)
+            mpz_clear(vk->vi[i]);
+        free(vk->vi);
+    }
 
-    free(vk->vi);
+    if (vk->n) {
+        for (unsigned long i = 0; i <= vk->s; ++i)
+            mpz_clear(vk->n[i]);
+        free(vk->n);
+    }
+
     free(vk);
 }

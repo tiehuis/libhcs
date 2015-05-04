@@ -1,3 +1,9 @@
+/**
+ * @file util.h
+ *
+ * Internal common functions that are not exposed to users of this library.
+ */
+
 #ifndef UTIL_H
 #define UTIL_H
 
@@ -6,27 +12,63 @@
 #include <gmp.h>
 #include "log.h"
 
+// Error codes
+#define HCS_OK    0x0
+#define HCS_EOPEN 0x1
+#define HCS_EREAD 0x2
+
 #define HCS_BASE 62
 
 #define err(fmt, ...) fprintf(stderr, fmt "\n", ## __VA_ARGS__ ), abort()
 
+/**
+ * Zeroes a all memory allocated to a mpz_t @p op.
+ */
 void mpz_zero(mpz_t op);
 
+/**
+ * Zeroes a va_list of mpz_t.
+ */
 void mpz_zeros(mpz_t op, ...);
 
+/**
+ * Generate a random prime @p rop of bit length > @p bitcnt
+ */
 void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt);
 
+/**
+ * Generate a random safe prime @p rop of bit length > @p bitcnt.
+ */
 void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
                            mp_bitcnt_t bitcnt);
 
-void mpz_seed(mpz_t rop, int bits);
+/**
+ * Gather seed from OS' entropy pool and store in an mpz_t @p rop. All values
+ * can be bitwise xored together.
+ *
+ * @return
+ * HCS_OK    - Success
+ * HCS_EOPEN - Failed to open entropy source
+ * HCS_EREAD - Failued to read from entropy source
+ */
+int mpz_seed(mpz_t rop, int bits);
 
+/** 
+ * Perform the chinese remainder theorem on 2 congruences.
+ */
 void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a,
               mpz_t con2_m);
 
+/**
+ * Generate a random dsa prime @p rop.
+ */
 void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate,
                           mp_bitcnt_t bitcnt);
 
+/**
+ * Generate a random value in the multiplicative group @p op*, storing the
+ * result in @p rop.
+ */
 void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op);
 
 #endif

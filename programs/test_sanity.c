@@ -28,7 +28,7 @@ int main(void)
 {
     TEST(pcs, pk, vk, hr, 512);
     TEST(pcs, pk, vk, hr, 512);
-    TEST(djcs, 2, pk, vk, hr, 512);
+    TEST(djcs, pk, vk, hr, 2, 512);
 
     /* El gamal */
     do {

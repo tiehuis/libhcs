@@ -1,6 +1,7 @@
 /*
  * @file djcs.c
- * @brief implements the Damgard-Jurik Cryptosystem
+ *
+ * Implementation of the Damgard-Jurik Cryptosystem (djcs).
  */
 
 #include <stdlib.h>
@@ -61,54 +62,30 @@ static void dlog_s(djcs_private_key *vk, mpz_t rop, mpz_t op)
     mpz_clears(a, t1, t2, t3, kfact, NULL);
 }
 
-void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+djcs_public_key* djcs_init_public_key(void)
 {
-    mpz_t t1;
-    mpz_init(t1);
+    djcs_public_key *pk = malloc(sizeof(djcs_public_key));
+    if (!pk) return NULL;
 
-    mpz_random_in_mult_group(t1, hr->rstate, pk->n[0]);
-    mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
-    mpz_powm(t1, t1, pk->n[pk->s-1], pk->n[pk->s]);
-    mpz_mul(rop, rop, t1);
-    mpz_mod(rop, rop, pk->n[pk->s]);
-
-    mpz_clear(t1);
+    mpz_init(pk->g);
+    pk->s = 0;
+    pk->n = NULL;
+    return pk;
 }
 
-void djcs_decrypt(djcs_private_key *vk, mpz_t rop, mpz_t cipher1)
+djcs_private_key* djcs_init_private_key(void)
 {
-    mpz_powm(rop, cipher1, vk->d, vk->n[vk->s]);
-    dlog_s(vk, rop, rop);
-    mpz_mul(rop, rop, vk->mu);
-    mpz_mod(rop, rop, vk->n[vk->s-1]);
+    djcs_private_key *vk = malloc(sizeof(djcs_private_key));
+    if (!vk) return NULL;
+
+    mpz_inits(vk->d, vk->mu, NULL);
+    vk->s = 0;
+    vk->n = NULL;
+    return vk;
 }
 
-void djcs_ep_add(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
-{
-    mpz_t t1;
-    mpz_init(t1);
-
-    mpz_set(t1, cipher1);
-    mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
-    mpz_mul(rop, rop, t1);
-    mpz_mod(rop, rop, pk->n[pk->s]);
-
-    mpz_clear(t1);
-}
-
-void djcs_ee_add(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2)
-{
-    mpz_mul(rop, cipher1, cipher2);
-    mpz_mod(rop, rop, pk->n[pk->s]);
-}
-
-void djcs_ep_mul(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
-{
-    mpz_powm(rop, cipher1, plain1, pk->n[pk->s]);
-}
-
-int djcs_generate_key_pair(unsigned long s, djcs_public_key *pk,
-        djcs_private_key *vk, hcs_rand *hr, unsigned long bits)
+int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
+                           hcs_rand *hr, unsigned long s, unsigned long bits)
 {
     mpz_t p, q;
 
@@ -151,50 +128,117 @@ int djcs_generate_key_pair(unsigned long s, djcs_public_key *pk,
     return 0;
 }
 
-djcs_public_key* djcs_init_public_key(void)
+void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
 {
-    djcs_public_key *pk = malloc(sizeof(djcs_public_key));
-    if (!pk) return NULL;
+    mpz_t t1;
+    mpz_init(t1);
 
-    mpz_init(pk->g);
-    pk->s = 0;
-    pk->n = NULL;
-    return pk;
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n[0]);
+    mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
+    mpz_powm(t1, t1, pk->n[pk->s-1], pk->n[pk->s]);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
 }
 
-djcs_private_key* djcs_init_private_key(void)
+void djcs_reencrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
 {
-    djcs_private_key *vk = malloc(sizeof(djcs_private_key));
-    if (!vk) return NULL;
+    mpz_t t1;
+    mpz_init(t1);
 
-    mpz_inits(vk->j, vk->d, vk->mu, NULL);
-    vk->s = 0;
-    vk->n = NULL;
-    return vk;
+    mpz_random_in_mult_group(t1, hr->rstate, pk->n[0]);
+    mpz_powm(t1, t1, pk->n[pk->s-1], pk->n[pk->s]);
+    mpz_mul(rop, op, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
+}
+
+void djcs_ep_add(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_set(t1, cipher1);
+    mpz_powm(rop, pk->g, plain1, pk->n[pk->s]);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+
+    mpz_clear(t1);
+}
+
+void djcs_ee_add(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2)
+{
+    mpz_mul(rop, cipher1, cipher2);
+    mpz_mod(rop, rop, pk->n[pk->s]);
+}
+
+void djcs_ep_mul(djcs_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
+{
+    mpz_powm(rop, cipher1, plain1, pk->n[pk->s]);
+}
+
+void djcs_decrypt(djcs_private_key *vk, mpz_t rop, mpz_t cipher1)
+{
+    mpz_powm(rop, cipher1, vk->d, vk->n[vk->s]);
+    dlog_s(vk, rop, rop);
+    mpz_mul(rop, rop, vk->mu);
+    mpz_mod(rop, rop, vk->n[vk->s-1]);
+}
+
+void djcs_clear_public_key(djcs_public_key *pk)
+{
+    if (pk->n) {
+        for (unsigned long i = 0; i < pk->s; ++i) {
+            mpz_zero(pk->n[i]);
+            mpz_clear(pk->n[i]);
+        }
+        free(pk->n);
+    }
+
+    mpz_zero(pk->g);
+}
+
+void djcs_clear_private_key(djcs_private_key *vk)
+{
+    if (vk->n) {
+        for (unsigned long i = 0; i < vk->s; ++i) {
+            mpz_zero(vk->n[i]);
+            mpz_clear(vk->n[i]);
+        }
+        free(vk->n);
+    }
+
+    mpz_zero(vk->mu);
+    mpz_zero(vk->d);
 }
 
 void djcs_free_public_key(djcs_public_key *pk)
 {
-    for (unsigned long i = 0; i < pk->s; ++i) {
-        mpz_zero(pk->n[i]);
-        mpz_clear(pk->n[i]);
+    if (pk->n) {
+        for (unsigned long i = 0; i < pk->s; ++i) {
+            mpz_zero(pk->n[i]);
+            mpz_clear(pk->n[i]);
+        }
+        free(pk->n);
     }
 
-    if (pk->n) free(pk->n);
-    mpz_zero(pk->g);
     mpz_clear(pk->g);
     free(pk);
 }
 
 void djcs_free_private_key(djcs_private_key *vk)
 {
-    for (unsigned long i = 0; i < vk->s; ++i) {
-        mpz_zero(vk->n[i]);
-        mpz_clear(vk->n[i]);
+    if (vk->n) {
+        for (unsigned long i = 0; i < vk->s; ++i) {
+            mpz_zero(vk->n[i]);
+            mpz_clear(vk->n[i]);
+        }
+        free(vk->n);
     }
 
-    if (vk->n) free(vk->n);
-    mpz_zeros(vk->j, vk->mu, vk->d, NULL);
-    mpz_clears(vk->j, vk->mu, vk->d, NULL);
+    mpz_clear(vk->mu);
+    mpz_clear(vk->d);
     free(vk);
 }

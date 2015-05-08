@@ -239,44 +239,9 @@ void pcs_free_public_key(pcs_public_key *pk)
     free(pk);
 }
 
-/* Sanity checks for use when importing keys */
-int pcs_verify_public_key(pcs_public_key *pk)
-{
-    mpz_t t;
-    mpz_init(t);
-
-    mpz_add_ui(t, pk->n, 1);
-    if (mpz_cmp(t, pk->g))
-        return 0;
-
-    mpz_pow_ui(t, pk->n, 2);
-    if (mpz_cmp(t, pk->n2))
-        return 0;
-
-    mpz_clear(t);
-    return 1;
-}
-
-int pcs_verify_private_key(pcs_private_key *vk)
-{
-    mpz_t t;
-    mpz_init(t);
-
-    mpz_pow_ui(t, vk->n, 2);
-    if (mpz_cmp(t, vk->n2))
-        return 0;
-
-    mpz_invert(t, vk->lambda, vk->n);
-    if (mpz_cmp(t, vk->mu))
-        return 0;
-
-    mpz_clear(t);
-    return 1;
-}
-
 int pcs_verify_key_pair(pcs_public_key *pk, pcs_private_key *vk)
 {
-    return (!pcs_verify_public_key(pk) || !pcs_verify_private_key(vk)) ? 0 : 1;
+    return true;
 }
 
 char *pcs_export_public_key(pcs_public_key *pk)

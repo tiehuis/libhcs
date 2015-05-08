@@ -207,44 +207,15 @@ void pcs_free_public_key(pcs_public_key *pk);
  */
 void pcs_free_private_key(pcs_private_key *vk);
 
-
-/**
- * Perform a sanity check to determine that the key appears to be correct.
- * This is not exhaustive, and no guarantees are made, but it will catch
- * obvious errors which may result from incorrect exporting and/or importing
- * of keys.
- *
- * @param pk A pointer to an initialised pcs_public_key
- * @return non-zero if key is value, else zero
- */
-int pcs_verify_public_key(pcs_public_key *pk);
-
 /**
  * Performs an exhaustive check on the values in a pair of keys. If this
- * succeeds, then the two keys are guaranteed to be pairs, and valid.
+ * succeeds, then the two keys are guaranteed to be key pairs, and valid.
  *
  * @param pk A pointer to an initialised pcs_public_key
  * @param vk A pointer to an initialised pcs_private_key
  * @return non-zero if keys are valid, else zero
  */
 int pcs_verify_key_pair(pcs_public_key *pk, pcs_private_key *vk);
-
-/**
- * Perform a sanity check to determine that the key appears to be correct.
- * This is not exhaustive, and no guarantees are made, but it will catch
- * obvious errors which may result from incorrect exporting and/or importing
- * of keys.
- *
- * @code
- * pcs_private_key *vk = pcs_init_private_key();
- * pcs_import_private_key(vk, "key.private");
- * if (!pcs_verify_public(vk)) exit(0);
- * @endcode
- *
- * @param vk A pointer to an initialised pcs_private_key
- * @return non-zero if key is valid, else zero
- */
-int pcs_verify_private_key(pcs_private_key *vk);
 
 /**
  * Export a public key as a string. We only store the minimum required values

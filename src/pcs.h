@@ -208,8 +208,11 @@ void pcs_free_public_key(pcs_public_key *pk);
 void pcs_free_private_key(pcs_private_key *vk);
 
 /**
- * Performs an exhaustive check on the values in a pair of keys. If this
- * succeeds, then the two keys are guaranteed to be key pairs, and valid.
+ * Check certain values shared between public and private keys to ensure
+ * they indeed are pairs. This checks only the n values, and assumes that
+ * the caller has not altered other internal values. If the caller has only
+ * interacted with the keys through the usual functions, then this should
+ * guarantee the keys are pairs.
  *
  * @param pk A pointer to an initialised pcs_public_key
  * @param vk A pointer to an initialised pcs_private_key

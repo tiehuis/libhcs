@@ -241,7 +241,7 @@ void pcs_free_public_key(pcs_public_key *pk)
 
 int pcs_verify_key_pair(pcs_public_key *pk, pcs_private_key *vk)
 {
-    return true;
+    return mpz_cmp(vk->n, pk->n) == 0;
 }
 
 char *pcs_export_public_key(pcs_public_key *pk)

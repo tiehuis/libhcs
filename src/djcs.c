@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include "com/parson.h"
 #include "com/util.h"
 #include "hcs_rand.h"
 #include "djcs.h"
@@ -217,7 +218,7 @@ void djcs_clear_private_key(djcs_private_key *vk)
 void djcs_free_public_key(djcs_public_key *pk)
 {
     if (pk->n) {
-        for (unsigned long i = 0; i < pk->s; ++i) {
+        for (unsigned long i = 0; i <= pk->s; ++i) {
             mpz_zero(pk->n[i]);
             mpz_clear(pk->n[i]);
         }
@@ -231,7 +232,7 @@ void djcs_free_public_key(djcs_public_key *pk)
 void djcs_free_private_key(djcs_private_key *vk)
 {
     if (vk->n) {
-        for (unsigned long i = 0; i < vk->s; ++i) {
+        for (unsigned long i = 0; i <= vk->s; ++i) {
             mpz_zero(vk->n[i]);
             mpz_clear(vk->n[i]);
         }
@@ -242,3 +243,118 @@ void djcs_free_private_key(djcs_private_key *vk)
     mpz_clear(vk->d);
     free(vk);
 }
+
+int djcs_verify_key_pair(djcs_public_key *pk, djcs_private_key *vk)
+{
+    return (mpz_cmp(vk->n[0], pk->n[0]) == 0) && (pk->s == vk->s);
+}
+
+char *djcs_export_public_key(djcs_public_key *pk)
+{
+    char *buffer;
+    char *retstr;
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj  = json_value_get_object(root);
+    buffer = mpz_get_str(NULL, HCS_INTERNAL_BASE, pk->n[0]);
+    json_object_set_number(obj, "s", pk->s);
+    json_object_set_string(obj, "n", buffer);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+char *djcs_export_private_key(djcs_private_key *vk)
+{
+    char *buffer;
+    char *retstr;
+
+    /* Allocate space for largest buffer output value used */
+    size_t buffer_size = mpz_sizeinbase((mpz_cmp(vk->n[0], vk->d) >= 0
+            ? vk->n[0] : vk->d), HCS_INTERNAL_BASE) + 2;
+    buffer = malloc(buffer_size);
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj = json_value_get_object(root);
+    json_object_set_number(obj, "s", vk->s);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, vk->n[0]);
+    json_object_set_string(obj, "n", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, vk->d);
+    json_object_set_string(obj, "d", buffer);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+int djcs_import_public_key(djcs_public_key *pk, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    pk->s = json_object_get_number(obj, "s");
+    pk->n = malloc(sizeof(mpz_t) * (pk->s + 1));
+
+    mpz_init(pk->n[0]);
+    mpz_set_str(pk->n[0], json_object_get_string(obj, "n"), HCS_INTERNAL_BASE);
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    mpz_add_ui(pk->g, pk->n[0], 1);
+    for (unsigned long i = 1; i <= pk->s; ++i) {
+        mpz_init_set(pk->n[i], pk->n[i-1]);
+        mpz_mul(pk->n[i], pk->n[i], pk->n[0]);
+    }
+
+    return 0;
+}
+
+int djcs_import_private_key(djcs_private_key *vk, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    vk->s = json_object_get_number(obj, "s");
+    vk->n = malloc(sizeof(mpz_t) * (vk->s + 1));
+
+    mpz_init(vk->n[0]);
+    mpz_set_str(vk->n[0], json_object_get_string(obj, "n"), HCS_INTERNAL_BASE);
+    mpz_set_str(vk->d, json_object_get_string(obj, "d"), HCS_INTERNAL_BASE);
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    for (unsigned long i = 1; i <= vk->s; ++i) {
+        mpz_init_set(vk->n[i], vk->n[i-1]);
+        mpz_mul(vk->n[i], vk->n[i], vk->n[0]);
+    }
+
+    mpz_add_ui(vk->mu, vk->n[0], 1);
+    mpz_powm(vk->mu, vk->mu, vk->d, vk->n[vk->s]);
+    dlog_s(vk, vk->mu, vk->mu);
+    mpz_invert(vk->mu, vk->mu, vk->n[vk->s-1]);
+    return 0;
+}
+
+#ifdef MAIN
+int main(void)
+{
+    djcs_public_key *pk = djcs_init_public_key();
+    djcs_private_key *vk = djcs_init_private_key();
+    hcs_rand *hr = hcs_rand_init(0);
+
+    djcs_generate_key_pair(pk, vk, hr, 1, 256);
+
+    char *s1 = djcs_export_private_key(vk);
+    char *s2 = djcs_export_public_key(pk);
+
+    printf("%s\n%s\n", s2, s1);
+
+    free(s1);
+    free(s2);
+
+    djcs_free_public_key(pk);
+    djcs_free_private_key(vk);
+    hcs_rand_free(hr);
+}
+#endif

@@ -181,6 +181,60 @@ void djcs_free_public_key(djcs_public_key *pk);
  */
 void djcs_free_private_key(djcs_private_key *vk);
 
+/**
+ * Check certain values shared between public and private keys to ensure
+ * they indeed are pairs. This checks only the n and s values, and assumes that
+ * the caller has not altered other internal values. If the caller has only
+ * interacted with the keys through the usual functions, then this should
+ * guarantee the keys are pairs.
+ *
+ * @param pk A pointer to an initialised djcs_public_key
+ * @param vk A pointer to an initialised djcs_private_key
+ * @return non-zero if keys are valid, else zero
+ */
+int djcs_verify_key_pair(djcs_public_key *pk, djcs_private_key *vk);
+
+/**
+ * Export a public key as a string. We only store the minimum required values
+ * to restore the key. In this case, these are the s and n values.
+ *
+ * The format these strings export as is as a JSON object.
+ *
+ * @param pk A pointer to an initialised djcs_public_key
+ * @return A string representing the given key, else NULL on error
+ */
+char* djcs_export_public_key(djcs_public_key *pk);
+
+/**
+ * Export a private key as a string. We only store the minimum required values
+ * to restore the key. In this case, these are the s, n and d values. The
+ * remaining values are then computed from these on import.
+ *
+ * @param vk A pointer to an initialised djcs_private_key
+ * @return A string representing the given key, else NULL on error
+ */
+char* djcs_export_private_key(djcs_private_key *vk);
+
+/**
+ * Import a public key from a string. The input string is expected to
+ * match the format given by the export functions.
+ *
+ * @param pk A pointer to an initialised djcs_public_key
+ * @param string A string storing the contents of a public key
+ * @return non-zero if success, else zero on format error
+ */
+int djcs_import_public_key(djcs_public_key *pk, const char *json);
+
+/**
+ * Import a private key from a string. The input string is expected to
+ * match the format given by the export functions.
+ *
+ * @param pk A pointer to an initialised djcs_private_key
+ * @param string A string storing the contents of a private key
+ * @return non-zero if success, else zero on format error
+ */
+int djcs_import_private_key(djcs_private_key *vk, const char *json);
+
 #ifdef __cplusplus
 }
 #endif

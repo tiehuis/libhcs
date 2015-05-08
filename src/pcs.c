@@ -40,7 +40,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include "com/tpl.h"
+#include "com/parson.h"
 #include "com/util.h"
 #include "hcs_rand.h"
 #include "pcs.h"
@@ -277,4 +277,88 @@ int pcs_verify_private_key(pcs_private_key *vk)
 int pcs_verify_key_pair(pcs_public_key *pk, pcs_private_key *vk)
 {
     return (!pcs_verify_public_key(pk) || !pcs_verify_private_key(vk)) ? 0 : 1;
+}
+
+char *pcs_export_public_key(pcs_public_key *pk)
+{
+    char *buffer;
+    char *retstr;
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj  = json_value_get_object(root);
+    buffer = mpz_get_str(NULL, HCS_INTERNAL_BASE, pk->n);
+    json_object_set_string(obj, "n", buffer);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+char *pcs_export_private_key(pcs_private_key *vk)
+{
+    char *buffer;
+    char *retstr;
+
+    /* Allocate space for largest buffer output value used */
+    size_t buffer_size = mpz_sizeinbase((mpz_cmp(vk->p, vk->q) >= 0
+            ? vk->p : vk->q), HCS_INTERNAL_BASE) + 2;
+    buffer = malloc(buffer_size);
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, vk->p);
+    json_object_set_string(obj, "p", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, vk->q);
+    json_object_set_string(obj, "q", buffer);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+int pcs_import_public_key(pcs_public_key *pk, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_set_str(pk->n, json_object_get_string(obj, "n"), HCS_INTERNAL_BASE);
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    mpz_add_ui(pk->g, pk->n, 1);
+    mpz_pow_ui(pk->n2, pk->n, 2);
+    return 0;
+}
+
+int pcs_import_private_key(pcs_private_key *vk, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_set_str(vk->p, json_object_get_string(obj, "p"), HCS_INTERNAL_BASE);
+    mpz_set_str(vk->q, json_object_get_string(obj, "q"), HCS_INTERNAL_BASE);
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    mpz_pow_ui(vk->p2, vk->p, 2);
+    mpz_pow_ui(vk->q2, vk->q, 2);
+    mpz_mul(vk->n, vk->p, vk->q);
+    mpz_sub_ui(vk->lambda, vk->p, 1);
+    mpz_sub_ui(vk->q, vk->q, 1);
+    mpz_lcm(vk->lambda, vk->lambda, vk->q);
+    mpz_add_ui(vk->q, vk->q, 1);
+    mpz_pow_ui(vk->n2, vk->n, 2);
+    mpz_invert(vk->mu, vk->lambda, vk->n);
+    mpz_sub_ui(vk->hp, vk->p, 1);
+    mpz_add_ui(vk->hq, vk->n, 1);
+    mpz_powm(vk->hp, vk->hq, vk->hp, vk->p2);
+    mpz_sub_ui(vk->hp, vk->hp, 1);
+    mpz_tdiv_q(vk->hp, vk->hp, vk->p);
+    mpz_invert(vk->hp, vk->hp, vk->p);
+    mpz_sub_ui(vk->hq, vk->q, 1);
+    mpz_powm(vk->hq, vk->hq, vk->hq, vk->q2);
+    mpz_sub_ui(vk->hq, vk->hq, 1);
+    mpz_tdiv_q(vk->hq, vk->hq, vk->q);
+    mpz_invert(vk->hq, vk->hq, vk->q);
+    return 0;
 }

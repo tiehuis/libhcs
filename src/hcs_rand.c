@@ -1,6 +1,6 @@
 /**
  * @file hcs_rand.c
- * 
+ *
  * Provides easy to use random state functions, that are required
  * for all probablistic schemes.
  *
@@ -40,12 +40,12 @@ int hcs_rand_reseed(hcs_rand *hr)
     // read correctly and alter mpz_seed to return a status code.
     mpz_t t1;
     mpz_init(t1);
-    
+
     if (mpz_seed(t1, HCS_RAND_SEED_BITS) != HCS_OK) {
         mpz_clear(t1);
         return 0;
     }
-        
+
     gmp_randseed(hr->rstate, t1);
     mpz_clear(t1);
     return 1;

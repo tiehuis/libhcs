@@ -17,7 +17,7 @@
 #define HCS_EOPEN 0x1
 #define HCS_EREAD 0x2
 
-#define HCS_BASE 62
+#define HCS_INTERNAL_BASE 62
 
 #define err(fmt, ...) fprintf(stderr, fmt "\n", ## __VA_ARGS__ ), abort()
 

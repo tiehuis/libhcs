@@ -247,7 +247,8 @@ int pcs_verify_key_pair(pcs_public_key *pk, pcs_private_key *vk);
 int pcs_verify_private_key(pcs_private_key *vk);
 
 /**
- * Export a public key as a string.
+ * Export a public key as a string. We only store the minimum required values
+ * to restore the key. In this case, this is only the n value.
  *
  * The format these strings export as is as a JSON object.
  *
@@ -257,12 +258,14 @@ int pcs_verify_private_key(pcs_private_key *vk);
 char* pcs_export_public_key(pcs_public_key *pk);
 
 /**
- * Export a private key as a string.
+ * Export a private key as a string. We only store the minimum required values
+ * to restore the key. In this case, these are the p and q values. The
+ * remaining values are then computed from these on import.
  *
  * @param vk A pointer to an initialised pcs_private_key
  * @return A string representing the given key, else NULL on error
  */
-int pcs_export_private_key(pcs_private_key *vk, const char *string);
+char* pcs_export_private_key(pcs_private_key *vk);
 
 /**
  * Import a public key from a string. The input string is expected to
@@ -272,7 +275,7 @@ int pcs_export_private_key(pcs_private_key *vk, const char *string);
  * @param string A string storing the contents of a public key
  * @return non-zero if success, else zero on format error
  */
-int pcs_import_public_key(pcs_public_key *pk, const char *file);
+int pcs_import_public_key(pcs_public_key *pk, const char *json);
 
 /**
  * Import a private key from a string. The input string is expected to
@@ -282,7 +285,7 @@ int pcs_import_public_key(pcs_public_key *pk, const char *file);
  * @param string A string storing the contents of a private key
  * @return non-zero if success, else zero on format error
  */
-int pcs_import_private_key(pcs_private_key *vk, const char *file);
+int pcs_import_private_key(pcs_private_key *vk, const char *json);
 
 #ifdef __cplusplus
 }

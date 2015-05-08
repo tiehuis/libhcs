@@ -9,7 +9,7 @@
 /* Globals */
 /***********/
 
-#define key_modulus_size 2048
+#define key_modulus_size 128
 #define voter_count 10
 #define available_votes 5
 #define candidate_count 5
@@ -27,7 +27,7 @@ void server_init(void)
 {
     server_pk = pcs_init_public_key();
     server_vk = pcs_init_private_key();
-    server_hr = hcs_rand_init(5);
+    server_hr = hcs_rand_init(0);
     pcs_generate_key_pair(server_pk, server_vk, server_hr, key_modulus_size);
 
     for (int i = 0; i < candidate_count; ++i) {
@@ -62,6 +62,10 @@ void server_tally(void)
     printf("\n--------------\n");
     printf(  "-Vote results-\n");
     printf(  "--------------\n");
+    for (int i = 0; i < candidate_count; ++i) {
+        gmp_printf("Candidate %-3d - Encrypted tally: %Zd\n", i + 1, candidates[i]);
+    }
+    printf("\n");
     for (int i = 0; i < candidate_count; ++i) {
         pcs_decrypt(server_vk, candidates[i], candidates[i]);
         gmp_printf("Candidate %-3d: %Zd votes\n", i + 1, candidates[i]);

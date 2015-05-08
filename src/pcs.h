@@ -99,6 +99,18 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
 void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
 
 /**
+ * Encrypt a value @p plain1, and set @p rop to the encrypted result. Do not
+ * randomly generate an r value, instead, use the given @p r. This is largely
+ * useless to a user, but is important for some zero-knowledge proofs.
+ *
+ * @param pk A pointer to an initialised pcs_public_key
+ * @param rop mpz_t where the encrypted result is stored
+ * @param plain1 mpz_t to be encrypted
+ * @param r random mpz_t value to be used during encryption
+ */
+void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r);
+
+/**
  * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
  * encrypted value, @p rop, will retain the same value as @cipher1.
  *

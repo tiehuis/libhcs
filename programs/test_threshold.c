@@ -4,7 +4,7 @@
 
 #define MODULUS_BITS 512
 #define AU_COUNT 5
-#define AU_REQ 2
+#define AU_REQ 3
 
 int main(int argc, char *argv[])
 {
@@ -27,6 +27,8 @@ int main(int argc, char *argv[])
 
     pcs_t_generate_key_pair(pk, vk, hr, MODULUS_BITS, AU_REQ, AU_COUNT);
     pcs_t_encrypt(pk, hr, b, a);
+    pcs_t_ep_add(pk, b, b, a);
+    pcs_t_ep_mul(pk, b, b, a);
 
     mpz_t *coeff = pcs_t_init_polynomial(vk, hr);
 

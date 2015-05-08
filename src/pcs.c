@@ -119,6 +119,19 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
     mpz_invert(vk->hq, vk->hq, vk->q);
 }
 
+void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_powm(t1, r, pk->n, pk->n2);
+    mpz_powm(rop, pk->g, plain1, pk->n2);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n2);
+
+    mpz_clear(t1);
+}
+
 void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;

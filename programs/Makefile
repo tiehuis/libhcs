@@ -2,7 +2,10 @@ CC	    ?= clang
 CFLAGS  += -g -Wall -Wextra -I../src/ -L../lib/ -Wl,-rpath=../lib/ -std=c99
 LDFLAGS += -lgmp -lhcs
 
-all: std_voting sanity threshold dj_threshold
+all: std_voting sanity threshold dj_threshold ppt_test
+
+ppt_test:
+	$(CC) $(CFLAGS) ppt_test.c $(LDFLAGS)
 
 thresh_voting: test_thresh_voting.c
 	$(CC) $(CFLAGS) test_thresh_voting.c $(LDFLAGS) -o test_thresh_voting

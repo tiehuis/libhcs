@@ -14,18 +14,18 @@
 #include "hcs_rand.h"
 #include "com/util.h"
 
+
 /* Currently one can set the seed. This is used only for testing and will
    be altered at a latter time to take no arguments. */
-hcs_rand* hcs_rand_init(const unsigned long v)
+hcs_rand* hcs_rand_init(void)
 {
     hcs_rand *hr = malloc(sizeof(hcs_rand));
     if (hr == NULL) return NULL;
 
     mpz_t t1;
-    mpz_init_set_ui(t1, v);
-
+    mpz_init_set_ui(t1, 0);
     gmp_randinit_default(hr->rstate);
-#if 0 // Comment out to zero seed for testing
+#ifndef HCS_STATIC_SEED // Comment out to zero seed for testing
     mpz_seed(t1, HCS_RAND_SEED_BITS);
 #endif
     gmp_randseed(hr->rstate, t1);

@@ -6,10 +6,9 @@
 #define AU_COUNT 5
 #define AU_REQ 3
 
-int main(int argc, char *argv[])
+int main(void)
 {
-    if (argc < 2) return 1;
-    hcs_rand *hr = hcs_rand_init(atoi(argv[1]));
+    hcs_rand *hr = hcs_rand_init();
 
     /* Initialise our keys as normal */
     pcs_t_public_key *pk = pcs_t_init_public_key();

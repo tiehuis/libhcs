@@ -1,6 +1,6 @@
 /**
  * @file hcs_rand.h
- * 
+ *
  * Provides secure random state for use in functions which require random
  * values. This is a wrapper around gmp_randstate_t, and utilizes them
  * internally as a PRNG. Currently, it uses gmp_randinit_default for choice of
@@ -15,6 +15,8 @@
 #define HCS_RAND
 
 #include <gmp.h>
+
+#define HCS_STATIC_SEED
 
 /**
  * The number of bits of seed which is gathered from our entropy source.
@@ -35,7 +37,7 @@ typedef struct {
  *
  * @return A pointer to an hcs_rand type on success, NULL on allocation failure
  */
-hcs_rand* hcs_rand_init(const unsigned long v);
+hcs_rand* hcs_rand_init(void);
 
 /**
  * Reseed the given hcs_rand. If we fail to gather sufficient entropy, we

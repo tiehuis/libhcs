@@ -5,7 +5,7 @@
 
 #define TEST(CRYPTO, ...)\
 do {\
-    hcs_rand *hr = hcs_rand_init(0);\
+    hcs_rand *hr = hcs_rand_init();\
     CRYPTO##_public_key *pk = CRYPTO##_init_public_key();\
     CRYPTO##_private_key *vk = CRYPTO##_init_private_key();\
     CRYPTO##_generate_key_pair(__VA_ARGS__);\
@@ -32,7 +32,7 @@ int main(void)
 
     /* El gamal */
     do {
-        hcs_rand *hr = hcs_rand_init(0);
+        hcs_rand *hr = hcs_rand_init();
         egcs_public_key *pk = egcs_init_public_key();
         egcs_private_key *vk = egcs_init_private_key();
         egcs_generate_key_pair(pk, vk, hr, 512);

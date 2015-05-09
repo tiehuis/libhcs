@@ -27,7 +27,7 @@ void server_init(void)
 {
     server_pk = pcs_init_public_key();
     server_vk = pcs_init_private_key();
-    server_hr = hcs_rand_init(0);
+    server_hr = hcs_rand_init();
     pcs_generate_key_pair(server_pk, server_vk, server_hr, key_modulus_size);
 
     for (int i = 0; i < candidate_count; ++i) {

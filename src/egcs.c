@@ -80,9 +80,9 @@ void egcs_ee_mul(egcs_public_key *pk, egcs_cipher *rop, egcs_cipher *ct1,
         egcs_cipher *ct2)
 {
     mpz_mul(rop->c1, ct1->c1, ct2->c2);
-    //mpz_mod(rop->c1, rop->c1, pk->q);
+    mpz_mod(rop->c1, rop->c1, pk->q);
     mpz_mul(rop->c2, ct1->c2, ct2->c2);
-    //mpz_mod(rop->c2, rop->c2, pk->q);
+    mpz_mod(rop->c2, rop->c2, pk->q);
 }
 
 void egcs_decrypt(egcs_private_key *vk, mpz_t rop, egcs_cipher *ct)

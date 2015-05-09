@@ -8,10 +8,9 @@
 
 #define S_ 2
 
-int main(int argc, char *argv[])
+int main(void)
 {
-    if (argc < 2) return 1;
-    hcs_rand *hr = hcs_rand_init(atoi(argv[1]));
+    hcs_rand *hr = hcs_rand_init();
 
     /* Initialise our keys as normal */
     djcs_t_public_key *pk = djcs_t_init_public_key();

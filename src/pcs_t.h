@@ -34,29 +34,32 @@ typedef struct {
 } pcs_t_auth_server;
 
 /**
- * Public key for use in the Threshold Paillier system.
- */
-typedef struct {
-    mpz_t n;        /**< Modulus of the key. n = p * q */
-    mpz_t g;        /**< Precomputation: n + 1 */
-    mpz_t n2;       /**< Precomputation: n^2 */
-} pcs_t_public_key;
-
-/**
- * Private key for use in the Threshold Paillier system.
+ * Public key for use in the Threshold Paillier system. This key is the main
+ * key used, even during decryption we use this key AS WELL as using the
+ * authorization servers.
  */
 typedef struct {
     unsigned long w; /**< The number of servers req to successfully decrypt */
     unsigned long l; /**< The number of decryption servers */
+    mpz_t n;         /**< Modulus of the key. n = p * q */
+    mpz_t g;         /**< Precomputation: n + 1 */
+    mpz_t n2;        /**< Precomputation: n^2 */
     mpz_t delta;     /**< Precomputation: l! */
+} pcs_t_public_key;
+
+/**
+ * Private key for use in the Threshold Paillier system. This key is
+ * effectively split up amongst parties into a number of pcs_t_auth_server
+ * types. Thus, once we are done splitting this key up (computing @p l
+ * pcs_t_auth_server types with pcs_t_compute_polynomial) we can safely
+ * destroy this key as it will not be required again.
+ */
+typedef struct {
+    unsigned long w;
+    unsigned long l;
     mpz_t *vi;       /**< Verification values for the decryption servers */
     mpz_t v;         /**< Cyclic generator of squares in Z*n^2 */
     mpz_t d;         /**< d = 0 mod m and d = 1 mod n^2 */
-    mpz_t p;         /**< A random prime determined during key generation */
-    mpz_t ph;        /**< A random prime such that p = 2*ph + 1 */
-    mpz_t q;         /**< A random prime determined during key generation */
-    mpz_t qh;        /**< A random prime such that q = 2*qh + 1 */
-    mpz_t m;         /**< Precomputation: ph * qh */
     mpz_t n;         /**< Modulus of the key: p * q */
     mpz_t n2;        /**< Precomputation: n^2 */
     mpz_t nm;        /**< Precomputation: n * m */
@@ -246,7 +249,7 @@ void pcs_t_set_auth_server(pcs_t_auth_server *au, mpz_t si, unsigned long i);
  * @param rop mpz_t where the calculated share is stored
  * @param cipher1 mpz_t which stores the ciphertext to decrypt
  */
-void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
+void pcs_t_share_decrypt(pcs_t_public_key *vk, pcs_t_auth_server *au,
                          mpz_t rop, mpz_t cipher1);
 
 /**
@@ -267,7 +270,7 @@ void pcs_t_share_decrypt(pcs_t_private_key *vk, pcs_t_auth_server *au,
  * @param rop mpz_t where the combined decrypted result is stored
  * @param c array of share values
  */
-int pcs_t_share_combine(pcs_t_private_key *vk, mpz_t rop, mpz_t *c);
+int pcs_t_share_combine(pcs_t_public_key *vk, mpz_t rop, mpz_t *c);
 
 /**
  * Frees a pcs_t_auth_server and all associated memory.

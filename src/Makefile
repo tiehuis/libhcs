@@ -1,5 +1,5 @@
 CC 	   ?= clang
-CFLAGS += -g -Wall -Wextra
+CFLAGS += -g -Wall -Wextra -std=c99
 SRCS   := pcs.c pcs_t.c djcs.c djcs_t.c egcs.c hcs_rand.c com/*.c
 
 all: hcs

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <hcs.h>
 
-#define MODULUS_BITS 512
+#define MODULUS_BITS 32
 #define AU_COUNT 5
 #define AU_REQ 3
 
@@ -51,7 +51,7 @@ int main(void)
     for (int i = 0; i < AU_COUNT; ++i) {
         mpz_init(cshr[i]);
         mpz_init(fshr[i]);
-        pcs_t_share_decrypt(vk, au[i], fshr[i], b);
+        pcs_t_share_decrypt(pk, au[i], fshr[i], b);
     }
 
     gmp_printf("Input value %Zd\n", a);
@@ -68,7 +68,7 @@ int main(void)
     mpz_set(cshr[0], fshr[0]);
     mpz_set(cshr[1], fshr[1]);
     mpz_set(cshr[2], fshr[2]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 3 servers: 0, 1, 2\n");
     gmp_printf("Output: %Zd\n\n", b);
 
@@ -76,7 +76,7 @@ int main(void)
     mpz_set(cshr[2], fshr[2]);
     mpz_set(cshr[1], fshr[1]);
     mpz_set(cshr[4], fshr[4]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 3 servers: 1, 2, 4\n");
     gmp_printf("Output: %Zd\n\n", b);
 
@@ -85,7 +85,7 @@ int main(void)
     mpz_set(cshr[2], fshr[2]);
     mpz_set(cshr[3], fshr[3]);
     mpz_set(cshr[4], fshr[4]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 4 servers: 1, 2, 3, 4\n");
     gmp_printf("Output: %Zd\n\n", b);
 
@@ -95,21 +95,21 @@ int main(void)
     mpz_set(cshr[2], fshr[2]);
     mpz_set(cshr[3], fshr[3]);
     mpz_set(cshr[4], fshr[4]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 5 servers: 0, 1, 2, 3, 4\n");
     gmp_printf("Output: %Zd\n\n", b);
 
     CLEAR_TABLE(cshr);
     mpz_set(cshr[0], fshr[0]);
     mpz_set(cshr[1], fshr[1]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 2 servers: 0, 1\n");
     gmp_printf("Output: %Zd\n\n", b);
 
     CLEAR_TABLE(cshr);
     mpz_set(cshr[1], fshr[1]);
     mpz_set(cshr[3], fshr[3]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 2 servers: 1, 3\n");
     gmp_printf("Output: %Zd\n\n", b);
 
@@ -117,7 +117,7 @@ int main(void)
     mpz_set(cshr[3], fshr[3]);
     mpz_set(cshr[2], fshr[3]);
     mpz_set(cshr[1], fshr[1]);
-    pcs_t_share_combine(vk, b, cshr);
+    pcs_t_share_combine(pk, b, cshr);
     printf("Using 1 servers: 3\n");
     gmp_printf("Output: %Zd\n\n", b);
 

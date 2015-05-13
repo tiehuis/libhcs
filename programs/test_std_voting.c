@@ -27,7 +27,7 @@ void server_init(void)
 {
     server_pk = pcs_init_public_key();
     server_vk = pcs_init_private_key();
-    server_hr = hcs_rand_init();
+    server_hr = hcs_init_rand();
     pcs_generate_key_pair(server_pk, server_vk, server_hr, key_modulus_size);
 
     for (int i = 0; i < candidate_count; ++i) {
@@ -42,6 +42,7 @@ void server_cleanup(void)
 {
     pcs_free_public_key(server_pk);
     pcs_free_private_key(server_vk);
+    hcs_free_rand(server_hr);
 
     for (int i = 0; i < candidate_count; ++i)
         mpz_clear(candidates[i]);

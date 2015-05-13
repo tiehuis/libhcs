@@ -5,7 +5,7 @@
 
 #define TEST(CRYPTO, ...)\
 do {\
-    hcs_rand *hr = hcs_rand_init();\
+    hcs_rand *hr = hcs_init_rand();\
     CRYPTO##_public_key *pk = CRYPTO##_init_public_key();\
     CRYPTO##_private_key *vk = CRYPTO##_init_private_key();\
     CRYPTO##_generate_key_pair(__VA_ARGS__);\
@@ -20,7 +20,7 @@ do {\
     mpz_clear(b);\
     CRYPTO##_free_public_key(pk);\
     CRYPTO##_free_private_key(vk);\
-    hcs_rand_free(hr);\
+    hcs_free_rand(hr);\
     printf("%s: All tests passed\n", #CRYPTO);\
 } while (0)
 
@@ -32,7 +32,7 @@ int main(void)
 
     /* El gamal */
     do {
-        hcs_rand *hr = hcs_rand_init();
+        hcs_rand *hr = hcs_init_rand();
         egcs_public_key *pk = egcs_init_public_key();
         egcs_private_key *vk = egcs_init_private_key();
         egcs_generate_key_pair(pk, vk, hr, 512);
@@ -48,7 +48,7 @@ int main(void)
         egcs_free_cipher(ct);
         egcs_free_public_key(pk);
         egcs_free_private_key(vk);
-        hcs_rand_free(hr);
+        hcs_free_rand(hr);
         printf("%s: All tests passed\n", "egcs");
     } while (0);
 }

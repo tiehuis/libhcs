@@ -37,7 +37,7 @@ typedef struct {
  *
  * @return A pointer to an hcs_rand type on success, NULL on allocation failure
  */
-hcs_rand* hcs_rand_init(void);
+hcs_rand* hcs_init_rand(void);
 
 /**
  * Reseed the given hcs_rand. If we fail to gather sufficient entropy, we
@@ -49,13 +49,13 @@ hcs_rand* hcs_rand_init(void);
  * @param A pointer to an initialised hcs_rand
  * @return non-zero on successful reseed, zero on failure
  */
-int hcs_rand_reseed(hcs_rand *hr);
+int hcs_reseed_rand(hcs_rand *hr);
 
 /**
  * Frees a hcs_rand and all associated memory.
  *
  * @param A pointer to an initliased hcs_rand
  */
-void hcs_rand_free(hcs_rand *hr);
+void hcs_free_rand(hcs_rand *hr);
 
 #endif

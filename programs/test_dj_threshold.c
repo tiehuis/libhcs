@@ -10,7 +10,7 @@
 
 int main(void)
 {
-    hcs_rand *hr = hcs_rand_init();
+    hcs_rand *hr = hcs_init_rand();
 
     /* Initialise our keys as normal */
     djcs_t_public_key *pk = djcs_t_init_public_key();
@@ -131,7 +131,7 @@ int main(void)
         mpz_clear(cshr[i]);
     }
 
-    hcs_rand_free(hr);
+    hcs_free_rand(hr);
 
     djcs_t_free_public_key(pk);
     djcs_t_free_private_key(vk);

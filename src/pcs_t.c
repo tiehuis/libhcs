@@ -159,31 +159,41 @@ void pcs_t_ep_mul(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
     mpz_powm(rop, cipher1, plain1, pk->n2);
 }
 
-mpz_t* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
+pcs_t_poly* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
 {
-    mpz_t *coeff = malloc(sizeof(mpz_t) * vk->w);
-    if (coeff == NULL) return NULL;
+    pcs_t_poly *px;
 
-    mpz_init_set(coeff[0], vk->d);
-    for (unsigned long i = 1; i < vk->w; ++i) {
-        mpz_init(coeff[i]);
-        mpz_urandomm(coeff[i], hr->rstate, vk->nm);
+    if ((px = malloc(sizeof(pcs_t_poly))) == NULL)
+        goto failure;
+    if ((px->coeff = malloc(sizeof(mpz_t) * vk->w)) == NULL)
+        goto failure;
+
+    px->n = vk->w;
+    mpz_init_set(px->coeff[0], vk->d);
+    for (unsigned long i = 1; i < px->n; ++i) {
+        mpz_init(px->coeff[i]);
+        mpz_urandomm(px->coeff[i], hr->rstate, vk->nm);
     }
 
-    return coeff;
+    return px;
+
+failure:
+    if (px->coeff) free(px->coeff);
+    if (px) free(px);
+    return NULL;
 }
 
-void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop,
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_poly *px, mpz_t rop,
                               const unsigned long x)
 {
     mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
 
-    mpz_set(rop, coeff[0]);
-    for (unsigned long i = 1; i < vk->w; ++i) {
+    mpz_set(rop, px->coeff[0]);
+    for (unsigned long i = 1; i < px->n; ++i) {
         mpz_ui_pow_ui(t1, x + 1, i);        // Correct for server 0-indexing
-        mpz_mul(t1, t1, coeff[i]);
+        mpz_mul(t1, t1, px->coeff[i]);
         mpz_add(rop, rop, t1);
         mpz_mod(rop, rop, vk->nm);
     }
@@ -192,11 +202,12 @@ void pcs_t_compute_polynomial(pcs_t_private_key *vk, mpz_t *coeff, mpz_t rop,
     mpz_clear(t2);
 }
 
-void pcs_t_free_polynomial(pcs_t_private_key *vk, mpz_t *coeff)
+void pcs_t_free_polynomial(pcs_t_poly *px)
 {
-    for (unsigned long i = 0; i < vk->w; ++i)
-        mpz_clear(coeff[i]);
-    free(coeff);
+    for (unsigned long i = 0; i < px->n; ++i)
+        mpz_clear(px->coeff[i]);
+    free(px->coeff);
+    free(px);
 }
 
 

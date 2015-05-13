@@ -29,7 +29,9 @@ int main(void)
     pcs_t_ep_add(pk, b, b, a);
     pcs_t_ep_mul(pk, b, b, a);
 
-    mpz_t *coeff = pcs_t_init_polynomial(vk, hr);
+    pcs_t_poly *px = pcs_t_init_polynomial(vk, hr);
+
+    gmp_printf("%Zd\n", px->coeff[0]);
 
     /* Set up all auth servers with the given vk values. This will
      * generate a secret share for each server and also set the verification
@@ -37,11 +39,11 @@ int main(void)
     for (int i = 0; i < AU_COUNT; ++i) {
         /* Polynomial is only on one machine. Server must request over network value
          * of polynomial and are sent an index and corresponding value. */
-        pcs_t_compute_polynomial(vk, coeff, au[i]->si, i);
+        pcs_t_compute_polynomial(vk, px, au[i]->si, i);
         pcs_t_set_auth_server(au[i], au[i]->si, i);
     }
 
-    pcs_t_free_polynomial(vk, coeff);
+    pcs_t_free_polynomial(px);
 
     /* Intialise a table to store the shares that are decrypted
      * by each individual server. */

@@ -1,9 +1,10 @@
+#include <stdio.h>
 #include <gmp.h>
 #include <hcs.h>
 
-#define AS_REQ   4
-#define AS_COUNT 7
 #define V_COUNT 50
+#define AS_COUNT 4
+#define AS_REQ   2
 
 #define loop_i(high) for (int i = 0; i < (high); ++i)
 
@@ -108,12 +109,31 @@ int main(void)
      * results and write the combined values to the board. Multiple share
      * combinations should be taken to ensure that the value we get is
      * indeed correct. */
+
+    /* Confirm we get the same output as others have posted. Confirm that
+     * different orderings indeed provide the same results. If not, test
+     * more combinations to determine the share that is invalid. */
+    pcs_t_share_combine(pk, svar2, board_shares);
+
+    /* Print results */
+    printf("Votes\n");
+    printf("------\n");
     loop_i(V_COUNT) {
-        /* Confirm we get the same output as others have posted. Confirm that
-         * different orderings indeed provide the same results. If not, test
-         * more combinations to determine the share that is invalid. */
-        pcs_t_share_combine(pk, svar2, board_shares);
+        gmp_printf("(id) %u : %Zd\n", i, voter[i]);
     }
+    printf("\nTally\n");
+    printf("-----\n");
+    gmp_printf("Sum = %Zd\n", svar1);
+
+    printf("\nShares\n");
+    printf("------\n");
+    loop_i(AS_COUNT) {
+        gmp_printf("(id) %u : %Zd\n", i, board_shares[i]);
+    }
+
+    printf("\nCombined\n");
+    printf("--------\n");
+    gmp_printf("%Zd\n", svar2);
 
     /* We have succesfully completed a vote. Cleanup. */
     loop_i(V_COUNT) mpz_clear(voter[i]);

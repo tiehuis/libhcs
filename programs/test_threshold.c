@@ -26,8 +26,7 @@ int main(void)
 
     pcs_t_generate_key_pair(pk, vk, hr, MODULUS_BITS, AU_REQ, AU_COUNT);
     pcs_t_encrypt(pk, hr, b, a);
-    pcs_t_ep_add(pk, b, b, a);
-    pcs_t_ep_mul(pk, b, b, a);
+    pcs_t_ee_add(pk, b, b, b);
 
     pcs_t_poly *px = pcs_t_init_polynomial(vk, hr);
 

@@ -100,8 +100,8 @@ void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t r, mpz_t rop, mpz_t plain1)
     mpz_t t1;
     mpz_init(t1);
 
-    mpz_powm(rop, r, pk->n, pk->n2);
     mpz_powm(t1, pk->g, plain1, pk->n2);
+    mpz_powm(rop, r, pk->n, pk->n2);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 
@@ -114,8 +114,8 @@ void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
     mpz_init(t1);
 
     mpz_random_in_mult_group(t1, hr->rstate, pk->n);
-    mpz_powm(rop, t1, pk->n, pk->n2);
-    mpz_powm(t1, pk->g, plain1, pk->n2);
+    mpz_powm(t1, t1, pk->n, pk->n2);
+    mpz_powm(rop, pk->g, plain1, pk->n2);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 

@@ -1,7 +1,9 @@
 all: src doc
 
-src: src/*
+src:
 	@(cd src && make)
 
-doc: src/*
-	$(shell doxygen .doxycfg)
+doc:
+	@(cd doc && make)
+
+.PHONY: src doc

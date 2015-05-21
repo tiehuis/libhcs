@@ -10,6 +10,7 @@ local:
 
 install:
 	cp lib/libhcs.so $(DIR_LIB)
+	@ldconfig
 	mkdir -p "$(DIR_INC)/libhcs/"
 	cp src/*.h "$(DIR_INC)/libhcs/"
 	@rm -f "$(DIR_INC)/libhcs/libhcs.h"

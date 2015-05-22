@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
+#include "com/parson.h"
 #include "com/util.h"
 #include "pcs_t.h"
 
@@ -338,4 +339,76 @@ void pcs_t_free_private_key(pcs_t_private_key *vk)
     }
 
     free(vk);
+}
+
+int pcs_t_verify_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk)
+{
+    return mpz_cmp(vk->n, pk->n) == 0;
+}
+
+char *pcs_t_export_public_key(pcs_t_public_key *pk)
+{
+    char *buffer;
+    char *retstr;
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj  = json_value_get_object(root);
+    buffer = mpz_get_str(NULL, HCS_INTERNAL_BASE, pk->n);
+    json_object_set_string(obj, "n", buffer);
+    json_object_set_number(obj, "w", pk->w);
+    json_object_set_number(obj, "l", pk->l);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+char *pcs_t_export_verify_values(pcs_t_private_key *vk);
+
+char *pcs_t_export_auth_server(pcs_t_auth_server *au)
+{
+    char *buffer;
+    char *retstr;
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj  = json_value_get_object(root);
+    buffer = mpz_get_str(NULL, HCS_INTERNAL_BASE, au->si);
+    json_object_set_string(obj, "si", buffer);
+    json_object_set_number(obj, "i", au->i);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
+int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_set_str(pk->n, json_object_get_string(obj, "n"), HCS_INTERNAL_BASE);
+    pk->l = json_object_get_number(obj, "l");
+    pk->w = json_object_get_number(obj, "w");
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    mpz_add_ui(pk->g, pk->n, 1);
+    mpz_pow_ui(pk->n2, pk->n, 2);
+    mpz_fac_ui(pk->delta, pk->l);
+    return 0;
+}
+
+int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json);
+
+int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_set_str(au->si, json_object_get_string(obj, "si"), HCS_INTERNAL_BASE);
+    au->i = json_object_get_number(obj, "i");
+    json_value_free(root);
+
+    /* Calculate remaining values */
+    return 0;
 }

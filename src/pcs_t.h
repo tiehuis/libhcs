@@ -323,4 +323,9 @@ void pcs_t_free_public_key(pcs_t_public_key *pk);
  */
 void pcs_t_free_private_key(pcs_t_private_key *vk);
 
+int pcs_t_verify_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk);
+int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json);
+char *pcs_t_export_public_key(pcs_t_public_key *pk);
+char *pcs_t_export_auth_server(pcs_t_auth_server *au);
+int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json);
 #endif

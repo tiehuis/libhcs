@@ -23,6 +23,10 @@
  */
 #define HCS_RAND_SEED_BITS 256
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Random state used by a number of cryptographic functions. This is just a
  * wrapper around a gmp_randstate_t variable.
@@ -57,5 +61,9 @@ int hcs_reseed_rand(hcs_rand *hr);
  * @param A pointer to an initliased hcs_rand
  */
 void hcs_free_rand(hcs_rand *hr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

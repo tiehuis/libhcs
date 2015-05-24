@@ -288,4 +288,8 @@ void djcs_t_free_public_key(djcs_t_public_key *pk);
  */
 void djcs_t_free_private_key(djcs_t_private_key *vk);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif

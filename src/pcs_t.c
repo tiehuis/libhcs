@@ -7,6 +7,10 @@
  * follows the scheme presented in the paper by damgard-jurik, but with a
  * chosen base of 2, rather than the variable s+1. This scheme was written
  * first for simplicity.
+ *
+ * @todo Desperately need to move away from naive prime generation here, as
+ * it is currently a massive bottleneck and computing large 2048 bit safe
+ * primes is taking to long.
  */
 
 #include <stdlib.h>
@@ -364,7 +368,10 @@ char *pcs_t_export_public_key(pcs_t_public_key *pk)
     return retstr;
 }
 
-char *pcs_t_export_verify_values(pcs_t_private_key *vk);
+char *pcs_t_export_verify_values(pcs_t_private_key *vk)
+{
+    return "";
+}
 
 char *pcs_t_export_auth_server(pcs_t_auth_server *au)
 {

@@ -16,7 +16,7 @@
 
 #include <gmp.h>
 
-#define HCS_STATIC_SEED
+//#define HCS_STATIC_SEED
 
 /**
  * The number of bits of seed which is gathered from our entropy source.

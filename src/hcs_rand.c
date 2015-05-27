@@ -14,7 +14,6 @@
 #include "hcs_rand.h"
 #include "com/util.h"
 
-
 /* Currently one can set the seed. This is used only for testing and will
    be altered at a latter time to take no arguments. */
 hcs_rand* hcs_init_rand(void)

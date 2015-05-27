@@ -12,6 +12,14 @@ fast and secure (hopefully). There is a requirement on the GMP bignum
 library, and some knowledge regarding the datatypes is required, as
 the types are not currently wrapped in some above layer.
 
+## To install
+    git clone https://github.com/Tiehuis/libhcs.git
+    make
+    sudo make install
+
+To uninstall, type
+    sudo make uninstall
+
 ## Things to do
 
 Ideally, once finished we should have:

@@ -26,6 +26,21 @@ extern "C" {
 #endif
 
 /**
+ * Stores data pertaining to the usage of proof computation and verification.
+ * This may be able to be generalised amongst all the threshold damgard-jurik
+ * variants, and even the single value versions.
+ */
+typedef struct {
+    mpz_t u1;
+    mpz_t u2;
+    mpz_t a1;
+    mpz_t a2;
+    mpz_t z1;
+    mpz_t z2;
+    mpz_t S;
+} pcs_t_proof;
+
+/**
  * Details of the polynomial used to compute values for decryption servers.
  */
 typedef struct {
@@ -129,9 +144,29 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
         const unsigned long w);
 
 /**
+ * Ecnrypt a value @p plain1, and set @p rop to the encryted result. This
+ * function uses the random value @p r, passed as a parameter by the caller
+ * instead of generating a value with an hcs_rand object.
+ *
+ * @p r should be in the field Z_{n^2}*.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param r mpz_t where the random value to use is stored
+ * @param rop mpz_t where the encrypted result is stored
+ * @param plain1 mpz_t to be encrypted
+ */
+//void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t r, mpz_t rop, mpz_t plain1)
+void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t rop, mpz_t r, mpz_t plain1);
+
+
+void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_rand *hr,
+        mpz_t r, mpz_t rop, mpz_t plain1);
+
+/**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
+ * @param hr A pointer to an initialised hcs_rand type
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
@@ -181,6 +216,48 @@ void pcs_t_ee_add(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2)
 void pcs_t_ep_mul(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1);
 
 /**
+ * Allocate and initialise the values in a pcs_t_proof object. This is used
+ * in all verification and computation involving proofs.
+ *
+ * @return A zero-initialised pcs_t_proof object
+ */
+pcs_t_proof* pcs_t_init_proof(void);
+
+/**
+ * Set a proof object's value to check for.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param pf A pointer to an initialised pcs_t_proof object
+ * @param r mpz_t value to set the proof to check for
+ */
+void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, mpz_t r);
+
+/**
+ * Compute the value for an n^s protocol.
+ */
+void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+        pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id);
+
+/**
+ * Verify the value computed for an n^s protocol.
+ */
+int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
+        unsigned long id);
+
+/**
+ * Compute the value for an n^s protocol, limited to 1 of 2 values.
+ */
+void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+        pcs_t_proof *pf, mpz_t rop, unsigned long n, unsigned long id);
+
+/**
+ * Frees a pcs_t proof object and all values associated with it.
+ *
+ * @param pf An initialised pcs_t_proof object
+ */
+void pcs_t_free_proof(pcs_t_proof *pf);
+
+/**
  * Allocate and initialise the values in a random polynomial. The length of
  * this polynomial is taken from values in @p vk, specifically it will be
  * of length vk->w. The polynomial functions are to be used by a single trusted
@@ -196,7 +273,7 @@ void pcs_t_ep_mul(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1);
  * pcs_t_free_polynomial(vk, poly);
  * @endcode
  *
- * @param vk v pointer to an initialised pcs_t_private_key
+ * @param vk A pointer to an initialised pcs_t_private_key
  * @param hr A pointer to an initialised hcs_rand type
  * @return A polynomial coefficient list on success, else NULL
  */

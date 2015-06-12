@@ -100,7 +100,22 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
     return 1;
 }
 
-void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t r, mpz_t rop, mpz_t plain1)
+void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_rand *hr,
+        mpz_t r, mpz_t rop, mpz_t plain1)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    mpz_random_in_mult_group(r, hr->rstate, pk->n);
+    mpz_powm(rop, r, pk->n, pk->n2);
+    mpz_powm(t1, pk->g, plain1, pk->n2);
+    mpz_mul(rop, rop, t1);
+    mpz_mod(rop, rop, pk->n2);
+
+    mpz_clear(t1);
+}
+
+void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t rop, mpz_t r, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -162,6 +177,103 @@ void pcs_t_ee_add(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t cipher2)
 void pcs_t_ep_mul(pcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1)
 {
     mpz_powm(rop, cipher1, plain1, pk->n2);
+}
+
+pcs_t_proof* pcs_t_init_proof(void)
+{
+    pcs_t_proof *pf = malloc(sizeof(pcs_t_proof));
+    if (pf == NULL) return NULL;
+    mpz_inits(pf->u1, pf->u2, pf->a1, pf->a2, pf->z1, pf->z2, pf->S, NULL);
+    return pf;
+}
+
+void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, mpz_t r)
+{
+    mpz_set_ui(pf->S, 0);
+    pcs_t_encrypt_r(pk, r, pf->S, pf->S);
+}
+
+void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+        pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id)
+{
+    mpz_t r, e, _0 ;
+    mpz_init(r);
+    mpz_init(e);
+    mpz_init_set_ui(_0, 0);
+
+    mpz_set(pf->u2, u);
+
+    // Random r in Zn* and a = E(0, r)
+    pcs_t_r_encrypt(pk, hr, r, pf->a2, _0);
+
+    /* CHoose a random t-bit hash with a mixture of values */
+    //e = hash(pf->a2, pf->S, id);
+    mpz_set_ui(e, 0xABCDABCD); // fix e for now
+
+    mpz_powm(pf->z2, v, e, pk->n);
+    mpz_mul(pf->z2, pf->z2, r);
+    mpz_mod(pf->z2, pf->z2, pk->n);
+
+    mpz_clear(r);
+    mpz_clear(e);
+    mpz_clear(u);
+    mpz_clear(_0);
+}
+
+int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
+        unsigned long id)
+{
+    int retval = 1;
+
+    mpz_t t1, t2, e;
+    mpz_init(t1);
+    mpz_init(t2);
+    mpz_init(e);
+
+    /* Ensure u, a, z are prime to n */
+    mpz_gcd(t1, pf->u2, pk->n);
+    if (mpz_cmp_ui(t1, 1) != 0) {
+        retval = 0; goto end;
+    }
+
+    mpz_gcd(t1, pf->a2, pk->n);
+    if (mpz_cmp_ui(t1, 1) != 0) {
+        retval = 0; goto end;
+    }
+
+    mpz_gcd(t1, pf->z2, pk->n);
+    if (mpz_cmp_ui(t1, 1) != 0) {
+        retval = 0; goto end;
+    }
+
+    mpz_set_ui(t1, 0);
+    pcs_t_encrypt_r(pk, t1, pf->z2, t1);
+
+    mpz_set_ui(e, 0xABCDABCD);
+    mpz_powm(t2, pf->u2, e, pk->n2);
+    mpz_mul(t2, t2, pf->a2);
+    mpz_mod(t2, t2, pk->n2);
+
+    if (mpz_cmp(t1, t2) != 0) {
+        retval = 0;
+    }
+
+end:
+    mpz_clear(t1);
+    mpz_clear(t2);
+    mpz_clear(e);
+    return retval;
+}
+
+void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+        pcs_t_proof *pf, mpz_t rop, unsigned long n, unsigned long id)
+{
+}
+
+void pcs_t_free_proof(pcs_t_proof *pf)
+{
+    mpz_clears(pf->u1, pf->u2, pf->a1, pf->a2, pf->z1, pf->z2, pf->S, NULL);
+    free(pf);
 }
 
 pcs_t_poly* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
@@ -419,3 +531,35 @@ int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
     /* Calculate remaining values */
     return 0;
 }
+
+#ifdef MAIN
+int main(void) {
+    pcs_t_private_key *vk = pcs_t_init_private_key();
+    pcs_t_public_key *pk = pcs_t_init_public_key();
+    hcs_rand *hr = hcs_init_rand();
+
+    pcs_t_generate_key_pair(pk, vk, hr, 128, 2, 4);
+
+    mpz_t u, v, _0;
+    mpz_inits(u, v, _0, NULL);
+    mpz_set(_0, pk->n); // Any value k * n for integer k will work
+
+    mpz_mul_ui(_0, _0, 7);  // Altering this value will not make the proof wrong
+
+    // If we have some n^th power, i.e. 1 = n^0, then we can transform the
+    // value into an encryption of 0 by multiplying the ciphertext by
+    pcs_t_r_encrypt(pk, hr, v, u, _0);
+
+    //mpz_mul(v, pk->g, v);
+
+    pcs_t_proof *pf = pcs_t_init_proof();
+    pcs_t_compute_ns_protocol(pk, hr, pf, u, v, 1);
+
+    if (pcs_t_verify_ns_protocol(pk, pf, 1)) {
+        gmp_printf("%Zd is an encryption of k*n\n", v);
+    }
+    else {
+        gmp_printf("%Zd is not an encryption of k*n\n", v);
+    }
+}
+#endif

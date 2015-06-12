@@ -40,10 +40,12 @@ int hcs_reseed_rand(hcs_rand *hr)
     mpz_t t1;
     mpz_init(t1);
 
+#ifndef HCS_STATIC_SEED
     if (mpz_seed(t1, HCS_RAND_SEED_BITS) != HCS_OK) {
         mpz_clear(t1);
         return 0;
     }
+#endif
 
     gmp_randseed(hr->rstate, t1);
     mpz_clear(t1);

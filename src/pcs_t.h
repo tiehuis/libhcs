@@ -31,13 +31,16 @@ extern "C" {
  * variants, and even the single value versions.
  */
 typedef struct {
+    mpz_t e1;
+    mpz_t e2;
     mpz_t u1;
     mpz_t u2;
     mpz_t a1;
     mpz_t a2;
     mpz_t z1;
     mpz_t z2;
-    mpz_t S;
+    unsigned long m1;
+    unsigned long m2;
 } pcs_t_proof;
 
 /**
@@ -230,7 +233,8 @@ pcs_t_proof* pcs_t_init_proof(void);
  * @param pf A pointer to an initialised pcs_t_proof object
  * @param r mpz_t value to set the proof to check for
  */
-void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, mpz_t r);
+void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, unsigned long m1,
+        unsigned long m2);
 
 /**
  * Compute the value for an n^s protocol.
@@ -248,7 +252,7 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
  * Compute the value for an n^s protocol, limited to 1 of 2 values.
  */
 void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
-        pcs_t_proof *pf, mpz_t rop, unsigned long n, unsigned long id);
+        pcs_t_proof *pf, mpz_t c1, mpz_t cr1, unsigned long k, unsigned long id);
 
 /**
  * Frees a pcs_t proof object and all values associated with it.

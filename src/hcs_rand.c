@@ -11,7 +11,7 @@
  */
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "libhcs/hcs_rand.h"
 #include "com/util.h"
 
 /* Currently one can set the seed. This is used only for testing and will

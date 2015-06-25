@@ -9,8 +9,8 @@
 #include <stdio.h>
 #include <gmp.h>
 #include "com/util.h"
-#include "hcs_rand.h"
-#include "egcs.h"
+#include "libhcs/hcs_rand.h"
+#include "libhcs/egcs.h"
 
 egcs_public_key* egcs_init_public_key(void)
 {

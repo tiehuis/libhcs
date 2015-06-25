@@ -19,7 +19,7 @@
 #include <gmp.h>
 #include "com/parson.h"
 #include "com/util.h"
-#include "pcs_t.h"
+#include "libhcs/pcs_t.h"
 
 /* This is simply L(x) when s = 1 */
 static void dlog_s(mpz_t n, mpz_t rop, mpz_t op)

@@ -10,8 +10,8 @@
 #include <gmp.h>
 #include "com/parson.h"
 #include "com/util.h"
-#include "hcs_rand.h"
-#include "djcs.h"
+#include "libhcs/djcs.h"
+#include "libhcs/hcs_rand.h"
 
 /*
  * Algorithm as seen in the initial paper. Simple optimizations

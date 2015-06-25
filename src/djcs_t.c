@@ -21,7 +21,7 @@
 #include <string.h>
 #include <gmp.h>
 #include "com/util.h"
-#include "djcs_t.h"
+#include "libhcs/djcs_t.h"
 
 static void dlog_s(djcs_t_private_key *vk, mpz_t rop, mpz_t op)
 {

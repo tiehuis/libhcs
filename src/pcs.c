@@ -42,8 +42,8 @@
 #include <gmp.h>
 #include "com/parson.h"
 #include "com/util.h"
-#include "hcs_rand.h"
-#include "pcs.h"
+#include "libhcs/hcs_rand.h"
+#include "libhcs/pcs.h"
 
 pcs_public_key* pcs_init_public_key(void)
 {

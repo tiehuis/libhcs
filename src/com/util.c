@@ -8,6 +8,11 @@
 #include <gmp.h>
 #include "util.h"
 
+#ifdef _WIN32
+#include "Wincrypt.h"                  // For CryptGenRandom
+#pragma comment(lib, "advapi32.lib")
+#endif
+
 /* If we are compiling with C11 support, we will have memset_s, otherwise
  * use this simple version instead. */
 #if __STDC_VERSION__ < 201112L
@@ -46,11 +51,12 @@ void mpz_zeros(mpz_t op, ...)
  * will gather 80 bits, for example. */
 int mpz_seed(mpz_t seed, int bits)
 {
+#if defined(__unix__) || defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))
     FILE *fd = fopen("/dev/urandom", "rb");
     if (!fd)
         return HCS_EOPEN;
 
-    int bytes = (bits / 8) + 1;
+    const int bytes = (bits / 8) + 1;
     unsigned char random_bytes[bytes];
     if (fread(random_bytes, sizeof(random_bytes), 1, fd) != 1)
         return HCS_EREAD;
@@ -58,7 +64,32 @@ int mpz_seed(mpz_t seed, int bits)
     mpz_import(seed, bytes, 1, sizeof(random_bytes[0]), 0, 0, random_bytes);
     memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
     fclose(fd);
-    
+
+#elif defined(_WIN32)
+    const DWORD bytes = (bits / 8) + 1;
+    HCRYPTPROV hCryptProv = 0;
+    BYTE pbBuffer[bytes];
+
+    if (!CryptAcquireContextW(&hCryptProv, 0, 0, PROV_RSA_FULL,
+            CRYPT_VERIFYCONTEXT, CRYPT_SILENT) {
+       return HCS_EREAD;
+    }
+
+    if (!CryptGenRandom(hCryptProv, bytes, pbBuffer)) {
+        CryptReleaseContext(hCryptProv, 0);
+        return HCS_EREAD;
+    }
+
+    mpz_import(seed, bytes, 1, sizeof(pbBuffer[0]), 0, 0, pbBuffer);
+    memset_s(pbBuffer, 0, bytes); /* Ensure we zero seed buffer data */
+
+    if (!CryptReleaseContext(hCryptProv, 0)) {
+        return HCS_EREAD;
+    }
+#else
+#   error "No random source known for this OS"
+#endif
+
     return HCS_OK;
 }
 

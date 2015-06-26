@@ -53,7 +53,7 @@ void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
  */
 int mpz_seed(mpz_t rop, int bits);
 
-/** 
+/**
  * Perform the chinese remainder theorem on 2 congruences.
  */
 void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a,

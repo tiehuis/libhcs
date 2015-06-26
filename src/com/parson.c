@@ -176,7 +176,7 @@ static int num_bytes_in_utf8_sequence(unsigned char c) {
 static int verify_utf8_sequence(const unsigned char *string, int *len) {
     unsigned int cp = 0;
     *len = num_bytes_in_utf8_sequence(string[0]);
-    
+
     if (*len == 1) {
         cp = string[0];
     } else if (*len == 2 && IS_CONT(string[1])) {
@@ -194,24 +194,24 @@ static int verify_utf8_sequence(const unsigned char *string, int *len) {
     } else {
         return 0;
     }
-    
+
     /* overlong encodings */
     if ((cp < 0x80    && *len > 1) ||
         (cp < 0x800   && *len > 2) ||
         (cp < 0x10000 && *len > 3)) {
         return 0;
     }
-    
+
     /* invalid unicode */
     if (cp > 0x10FFFF) {
         return 0;
     }
-    
+
     /* surrogate halves */
     if (cp >= 0xD800 && cp <= 0xDFFF) {
         return 0;
     }
-    
+
     return 1;
 }
 
@@ -1101,7 +1101,7 @@ JSON_Value * json_value_deep_copy(const JSON_Value *value) {
     const char *temp_string = NULL, *temp_string_copy = NULL, *temp_key = NULL;
     JSON_Array *temp_array = NULL, *temp_array_copy = NULL;
     JSON_Object *temp_object = NULL, *temp_object_copy = NULL;
-    
+
     switch (json_value_get_type(value)) {
         case JSONArray:
             temp_array = json_value_get_array(value);
@@ -1501,7 +1501,7 @@ JSON_Status json_object_clear(JSON_Object *object) {
     if (object == NULL) {
         return JSONFailure;
     }
-    for (i = 0; i < json_object_get_count(object); i++) {        
+    for (i = 0; i < json_object_get_count(object); i++) {
         PARSON_FREE(object->names[i]);
         json_value_free(object->values[i]);
     }

@@ -20,8 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include "com/util.h"
+#include "libhcs/hcs_rand.h"
 #include "libhcs/djcs_t.h"
+#include "com/util.h"
 
 static void dlog_s(djcs_t_private_key *vk, mpz_t rop, mpz_t op)
 {

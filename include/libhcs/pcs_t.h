@@ -47,16 +47,16 @@ typedef struct {
  * Details of the polynomial used to compute values for decryption servers.
  */
 typedef struct {
-    unsigned long n;
-    mpz_t *coeff;
+    unsigned long n;    /**< The number of terms in the polynomial */
+    mpz_t *coeff;       /**< Coefficients of the polynomial */
 } pcs_t_poly;
 
 /**
  * Details that a decryption server is required to keep track of.
  */
 typedef struct {
-    unsigned long i;
-    mpz_t si;
+    unsigned long i;    /**< The server index in the particular instance */
+    mpz_t si;           /**< The polynomial evaluation at @p i */
 } pcs_t_auth_server;
 
 /**
@@ -147,7 +147,7 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
         const unsigned long w);
 
 /**
- * Ecnrypt a value @p plain1, and set @p rop to the encryted result. This
+ * Encrypt a value @p plain1, and set @p rop to the encryted result. This
  * function uses the random value @p r, passed as a parameter by the caller
  * instead of generating a value with an hcs_rand object.
  *
@@ -158,10 +158,19 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-//void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t r, mpz_t rop, mpz_t plain1)
 void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t rop, mpz_t r, mpz_t plain1);
 
-
+/**
+ * Encrypt a value @p plain1, and set @p rop to the encrypted result. This only
+ * differs from pcs_t_encrypt in that the random value generated for use in
+ * this encryption is stored in the mpz_t variable, @p r.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param hr A pointer to an initialised hcs_rand type
+ * @param r mpz_t where the random value generated is stored
+ * @param rop mpz_t where the encrypted result is stored
+ * @param plain1 mpz_t to be encrypted
+ */
 void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_rand *hr,
         mpz_t r, mpz_t rop, mpz_t plain1);
 
@@ -237,19 +246,40 @@ void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, unsigned long m1,
         unsigned long m2);
 
 /**
- * Compute the value for an n^s protocol.
+ * Compute a proof for a particular value u, and an @p id. @p u is the
+ * encrypted value for which the proof is generated for, with @p v being the
+ * random value used to generate it. @u and @v can be generated using the
+ * pcs_t_r_encrypt function.
+ *
+ * The result of this function is a proof result stored in @p pf, which can be
+ * queried to determine if @u is an encryption of an n'th power.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param hr A pointer to an initialised hcs_rand object
+ * @param pf A pointer to an initialised pcs_t_proof object
+ * @param u mpz_t value to construct the proof for
+ * @param v mpz_t value which was used to encrypt the plaintext @p u
+ * @param id User id in the system. This can be discarded by using the value 0.
  */
 void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
         pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id);
 
 /**
- * Verify the value computed for an n^s protocol.
+ * Verify a proof and return whether it is an n'th power.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param pf A pointer to an initialised hcs_rand object
+ * @param id User id in the system.
+ * @return 0 if not an n'th power, non-zero if it is an n'th power
  */
 int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
         unsigned long id);
 
 /**
  * Compute the value for an n^s protocol, limited to 1 of 2 values.
+ *
+ * @todo Determine exactly what the @p c1 and @cr1 parameters refer to and how
+ * best to retrieve them from a given value.
  */
 void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
         pcs_t_proof *pf, mpz_t c1, mpz_t cr1, unsigned long k, unsigned long id);
@@ -400,15 +430,57 @@ void pcs_t_free_public_key(pcs_t_public_key *pk);
  * not zeroed, so one must call pcs_t_clear_private_key if it is required.
  * one does not need to call pcs_t_clear_private_key before using this function.
  *
- * @param vk v pointer to an initialised pcs_t_private_key
+ * @param vk A pointer to an initialised pcs_t_private_key
  */
 void pcs_t_free_private_key(pcs_t_private_key *vk);
 
+/**
+ * Sanity check to quickly determine if pk and vk refer to the same values and
+ * are compatible.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param vk A pointer to an initialised pcs_t_private_key
+ * @return non-zero if keys match, zero if they do not
+ */
 int pcs_t_verify_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk);
+
+/**
+ * Import a public key from a json string. The format of the json string must
+ * match those of the export functions, and is described more in-depth at
+ * @(refer to description of serialization).
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param json A null-terminated json string containing public key data
+ * @return 0 on success, non-zero on parse failure
+ */
 int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json);
-char *pcs_t_export_verify_values(pcs_t_private_key *vk);
+
+/**
+ * Export a public key from as a json string. This function allocates memory
+ * and it is up to the caller to free it accordingly.
+ *
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @return A null-terminated json string
+ */
 char *pcs_t_export_public_key(pcs_t_public_key *pk);
+
+/**
+ * Export an auth server as a json string. This function allocates memory and
+ * it is up to the caller to free it accordingly.
+ *
+ * @param au A pointer to an initialised pcs_t_auth_server
+ * @return A null-terminated json string
+ */
 char *pcs_t_export_auth_server(pcs_t_auth_server *au);
+
+/**
+ * Import an auth server from a json string. Th format of the json string
+ * must match that of the corresponding import function.
+ *
+ * @param au A pointer to an initialised pcs_t_auth_server
+ * @param json A null-terminated json string containing auth server data
+ * @return 0 on success, non-zero on parse failure
+ */
 int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json);
 
 #ifdef __cplusplus

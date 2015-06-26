@@ -16,6 +16,10 @@
 
 #include <gmp.h>
 
+/**
+ * If this define is set, then a static seed of 0 will always be used in any
+ * hcs_rand functions. ONLY use this for testing.
+ */
 //#define HCS_STATIC_SEED
 
 /**

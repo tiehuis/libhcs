@@ -31,7 +31,7 @@ egcs_private_key* egcs_init_private_key(void)
 }
 
 void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk,
-        hcs_rand *hr, int bits)
+        hcs_rand *hr, const unsigned long bits)
 {
     mpz_t t;
     mpz_init(t);

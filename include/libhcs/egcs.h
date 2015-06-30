@@ -80,7 +80,7 @@ egcs_private_key* egcs_init_private_key(void);
  * @param bits The number of bits for the modulus of the key
  */
 void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk,
-                            hcs_rand *hr, int bits);
+                            hcs_rand *hr, const unsigned long bits);
 
 /**
  * Initialise a egcs_cipher and return a pointer to the newly created

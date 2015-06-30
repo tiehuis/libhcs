@@ -13,8 +13,8 @@
  * All mpz_t values can be alises unless otherwise stated.
  */
 
-#ifndef EGCS_H
-#define EGCS_H
+#ifndef HCS_EGCS_H
+#define HCS_EGCS_H
 
 #include <gmp.h>
 #include "hcs_rand.h"

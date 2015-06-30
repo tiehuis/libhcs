@@ -1,5 +1,5 @@
-#ifndef LIBHCS_H
-#define LIBHCS_H
+#ifndef HCS_LIBHCS_H
+#define HCS_LIBHCS_H
 
 #include <libhcs/pcs.h>
 #include <libhcs/pcs_t.h>

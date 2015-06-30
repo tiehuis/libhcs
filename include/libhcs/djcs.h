@@ -7,8 +7,8 @@
  * s > 0.
  */
 
-#ifndef DJCS_H
-#define DJCS_H
+#ifndef HCS_DJCS_H
+#define HCS_DJCS_H
 
 #include <gmp.h>
 #include "hcs_rand.h"

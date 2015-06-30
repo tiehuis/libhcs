@@ -13,8 +13,8 @@
  * All mpz_t values can be aliases unless otherwise stated.
  */
 
-#ifndef PCS_H
-#define PCS_H
+#ifndef HCS_PCS_H
+#define HCS_PCS_H
 
 #include <gmp.h>
 #include "hcs_rand.h"

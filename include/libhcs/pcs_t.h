@@ -15,8 +15,8 @@
  * in incorrect results.
  */
 
-#ifndef PCS_T_H
-#define PCS_T_H
+#ifndef HCS_PCS_T_H
+#define HCS_PCS_T_H
 
 #include <gmp.h>
 #include "hcs_rand.h"

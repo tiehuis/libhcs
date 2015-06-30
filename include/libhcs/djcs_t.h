@@ -12,8 +12,8 @@
  * in incorrect results.
  */
 
-#ifndef DJCS_T_H
-#define DJCS_T_H
+#ifndef HCS_DJCS_T_H
+#define HCS_DJCS_T_H
 
 #include <gmp.h>
 #include "hcs_rand.h"

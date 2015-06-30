@@ -11,8 +11,8 @@
  * it satisfies the required randomness.
  */
 
-#ifndef HCS_RAND
-#define HCS_RAND
+#ifndef HCS_RAND_H
+#define HCS_RAND_H
 
 #include <gmp.h>
 

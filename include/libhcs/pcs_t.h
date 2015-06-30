@@ -49,7 +49,7 @@ typedef struct {
 typedef struct {
     unsigned long n;    /**< The number of terms in the polynomial */
     mpz_t *coeff;       /**< Coefficients of the polynomial */
-} pcs_t_poly;
+} pcs_t_polynomial;
 
 /**
  * Details that a decryption server is required to keep track of.
@@ -311,7 +311,7 @@ void pcs_t_free_proof(pcs_t_proof *pf);
  * @param hr A pointer to an initialised hcs_rand type
  * @return A polynomial coefficient list on success, else NULL
  */
-pcs_t_poly* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr);
+pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr);
 
 /**
  * Compute a polynomial P(x) for a given x value in the required finite field.
@@ -323,8 +323,8 @@ pcs_t_poly* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr);
  * @param rop mpz_t where the result is stored
  * @param x The value to calculate the polynomial at
  */
-void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_poly *px, mpz_t rop,
-                              const unsigned long x);
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_polynomial *px,
+                              mpz_t rop, const unsigned long x);
 
 /**
  * Frees a given polynomial (array of mpz_t values) and all associated data.
@@ -334,7 +334,7 @@ void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_poly *px, mpz_t rop,
  * @param vk A pointer to an initialised pcs_t_private_key
  * @param A pointer to a list of coefficients of a polynomial
  */
-void pcs_t_free_polynomial(pcs_t_poly *px);
+void pcs_t_free_polynomial(pcs_t_polynomial *px);
 
 /**
  * Initialise a pcs_t_auth_server and return a pointer to the newly created

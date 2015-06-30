@@ -411,11 +411,11 @@ void pcs_t_free_proof(pcs_t_proof *pf)
     free(pf);
 }
 
-pcs_t_poly* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
+pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
 {
-    pcs_t_poly *px;
+    pcs_t_polynomial *px;
 
-    if ((px = malloc(sizeof(pcs_t_poly))) == NULL)
+    if ((px = malloc(sizeof(pcs_t_polynomial))) == NULL)
         goto failure;
     if ((px->coeff = malloc(sizeof(mpz_t) * vk->w)) == NULL)
         goto failure;
@@ -435,7 +435,7 @@ failure:
     return NULL;
 }
 
-void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_poly *px, mpz_t rop,
+void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_polynomial *px, mpz_t rop,
                               const unsigned long x)
 {
     mpz_t t1, t2;
@@ -454,7 +454,7 @@ void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_poly *px, mpz_t rop,
     mpz_clear(t2);
 }
 
-void pcs_t_free_polynomial(pcs_t_poly *px)
+void pcs_t_free_polynomial(pcs_t_polynomial *px)
 {
     for (unsigned long i = 0; i < px->n; ++i)
         mpz_clear(px->coeff[i]);

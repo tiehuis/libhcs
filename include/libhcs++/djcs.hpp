@@ -4,8 +4,8 @@
  * A C++ wrapper class around djcs.c
  */
 
-#ifndef DJCS_HPP
-#define DJCS_HPP
+#ifndef HCS_DJCS_HPP
+#define HCS_DJCS_HPP
 
 #include <string.h>
 #include <gmpxx.h>

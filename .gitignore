@@ -1,12 +1,14 @@
 doc/man
 doc/html
 doc/doxygen_sqlite3.db
+a.out
 lib/*
-test/*
 *.skip
+Makefile*
+bin/*
 
 # Ignore all cmake build files
-[cC][mM][aA][kK][eE]*
+*[cC][mM][aA][kK][eE]*
 install_manifest.txt
 # Don't ignore CMakeList.txt, though!
 !CMakeLists.txt

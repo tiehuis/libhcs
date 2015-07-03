@@ -15,8 +15,8 @@
  * in incorrect results.
  */
 
-#ifndef DJCS_T_HPP
-#define DJCS_T_HPP
+#ifndef HCS_DJCS_T_HPP
+#define HCS_DJCS_T_HPP
 
 #include <string>
 #include <gmpxx.h>

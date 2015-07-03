@@ -48,24 +48,34 @@ public:
     }
 
     /* Encryption functions acting on a key */
-    void encrypt(mpz_class &rop, mpz_class &op) {
+    mpz_class encrypt(mpz_class &op) {
+        mpz_class rop;
         pcs_encrypt(pk, hr->as_ptr(), rop.get_mpz_t(), op.get_mpz_t());
+        return rop;
     }
 
-    void reencrypt(mpz_class &rop, mpz_class &op) {
+    mpz_class reencrypt(mpz_class &op) {
+        mpz_class rop;
         pcs_reencrypt(pk, hr->as_ptr(), rop.get_mpz_t(), op.get_mpz_t());
+        return rop;
     }
 
-    void ep_add(mpz_class &rop, mpz_class &c1, mpz_class &c2) {
+    mpz_class ep_add(mpz_class &c1, mpz_class &c2) {
+        mpz_class rop;
         pcs_ep_add(pk, rop.get_mpz_t(), c1.get_mpz_t(), c2.get_mpz_t());
+        return rop;
     }
 
-    void ee_add(mpz_class &rop, mpz_class &c1, mpz_class &c2) {
+    mpz_class ee_add(mpz_class &c1, mpz_class &c2) {
+        mpz_class rop;
         pcs_ee_add(pk, rop.get_mpz_t(), c1.get_mpz_t(), c2.get_mpz_t());
+        return rop;
     }
 
-    void ep_mul(mpz_class &rop, mpz_class &c1, mpz_class &p1) {
+    mpz_class ep_mul(mpz_class &c1, mpz_class &p1) {
+        mpz_class rop;
         pcs_ep_mul(pk, rop.get_mpz_t(), c1.get_mpz_t(), p1.get_mpz_t());
+        return rop;
     }
 
     void clear() {
@@ -107,8 +117,10 @@ public:
         return hr->as_ptr();
     }
 
-    void decrypt(mpz_class &rop, mpz_class &c1) {
+    mpz_class decrypt(mpz_class &c1) {
+        mpz_class rop;
         pcs_decrypt(vk, rop.get_mpz_t(), c1.get_mpz_t());
+        return rop;
     }
 
     void clear() {

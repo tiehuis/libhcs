@@ -21,6 +21,8 @@ static void memset_s(void *v, int c, size_t n)
     volatile unsigned char *p = v;
     while (n--) *p++ = c;
 }
+#else
+#include <string.h>
 #endif
 
 /* Zero a single mpz_t variable. mpz_clear does not seem to be required
@@ -62,7 +64,7 @@ int mpz_seed(mpz_t seed, int bits)
         return HCS_EREAD;
 
     mpz_import(seed, bytes, 1, sizeof(random_bytes[0]), 0, 0, random_bytes);
-    memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
+    //memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
     fclose(fd);
 
 #elif defined(_WIN32)
@@ -110,6 +112,138 @@ void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op)
     mpz_clear(t1);
 }
 
+void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t bitcnt)
+{
+    /* This function generates a value, pi, which minimizes the ratio
+     * phi(pi) / pi by choosing all prime factors of small powers. Also,
+     * we return a value t, which is 2 * p^k, where p^k is the maximum value
+     * of any prime power in the value pi. Further, we construct a sequence
+     * theta, which represents a bit pattern corresponding to pi's prime
+     * factors. */
+
+    mpz_t p;
+    mpz_init(p);
+
+    mpz_set_ui(pi, 1);
+    mpz_set_ui(theta, 0);
+    mpz_set_ui(p, 2);       // Discard prime value 2
+    mpz_set_ui(t, 0);
+
+    /* In order to have a sufficient size Emin/Emax, just ensure pi is
+     * within 16 bits of bitcnt */
+    do {
+        mpz_nextprime(p, p);
+        mpz_mul(pi, pi, p);
+    } while (mpz_sizeinbase(pi, 2) < bitcnt - 16);
+
+    mpz_mul_ui(t, p, 2);
+    mpz_clear(p);
+}
+
+void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
+        mp_bitcnt_t bitcnt)
+{
+    /* This function generates a value, pi, which minimizes the ratio
+     * phi(pi) / pi by choosing all prime factors of small powers. Also,
+     * we return a value t, which is 2 * p^k, where p^k is the maximum value
+     * of any prime power in the value pi. Further, we construct a sequence
+     * theta, which represents a bit pattern corresponding to pi's prime
+     * factors. */
+
+    mpz_t p, t;
+    mpz_init(p);
+    mpz_init(t);
+
+    mpz_set_ui(nu, 1);
+    mpz_set_ui(lambda, 1);
+    mpz_set_ui(p, 2);       // Discard prime value 2
+
+    /* In order to have a sufficient size Emin/Emax, just ensure pi is
+     * within 16 bits of bitcnt */
+    do {
+        mpz_nextprime(p, p);
+        mpz_sub_ui(t, p, 1);        // For prime > 2, just use totient value
+        mpz_lcm(lambda, lambda, t);
+        mpz_mul(nu, nu, p);
+    } while (mpz_sizeinbase(nu, 2) < bitcnt - 16);
+
+    /* Find an Emax and Emin to construct rho and pi */
+    /* Want Emax * nu = Pi as close to Wmax as possible */
+
+    mpz_mul_ui(pi, nu, 1729);   // These are hardcoded, but alter above loop
+                                // to check and have these constructed potentially
+    mpz_mul_ui(rho, nu, 4180);
+
+    // Actually set pi
+
+    mpz_clear(p);
+    mpz_clear(t);
+}
+
+void generator_g_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
+        gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+{
+}
+
+/* We should call a function which precomputes these values and then
+ * pass them to this function ideally to avoid excessive computation */
+void generator_gd_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
+        gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+{
+    mpz_t t1;
+    mpz_init(t1);
+
+    // pi is zero
+    mpz_urandomb(rop, rstate, bitcnt);
+
+    do {
+        mpz_add_ui(rop, rop, 2);
+        mpz_powm(t1, rop, lambda, pi);
+    } while (mpz_cmp_ui(t1, 1) != 0);
+
+    mpz_clear(t1);
+}
+
+void mpze_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+{
+
+    /* Wmax = 2^bitcnt - 1
+     * Wmin = 2^(bitcnt-1) + 1
+     */
+
+    /* We need to find an integer nu, such that minimizing phi(nu)/nu and
+     * for which there exist Emin . nu > Wmin and Emax . nu < Wmax - Wmin.
+     *
+     * Then, Pi = Emax . nu and Rho = Emin . nu
+     */
+
+    /* nu must minimize phi(nu) / nu, in other words, we wish to choose
+     * only small powers of primes, since phi(p^k) = p^k - p^(k-1). During
+     * this generation of pi, we also calculate a small factor, which will
+     * be our Emax and in the range [1000, 10000]. As a result, we will
+     * be able to calculate the value rho by randomly choosing a value of
+     * Emin for which rho is in the required range. */
+
+    mpz_t c, pi, lambda, rho, nu;
+    mpz_inits(c, pi, lambda, rho, nu, NULL);
+
+    generator_gd_precompute(pi, nu, lambda, rho, bitcnt);
+    generator_gd_compute(c, pi, lambda, rstate, bitcnt);
+
+_2:
+    mpz_add(rop, c, rho);
+    if (mpz_even_p(rop))
+        mpz_add(rop, rop, nu);
+
+    if (mpz_probab_prime_p(rop, 25) == 0) {
+        mpz_mul_ui(c, c, 2);
+        mpz_mod(c, c, pi);
+        goto _2;
+    }
+
+    mpz_clears(c, pi, lambda, rho, nu, NULL);
+}
+
 /* Generate a random prime of minimum bitcnt number of bits. Currently this
  * doesn't have any other requirements. Strong primes or anything generally
  * are not seen as too useful now, as newer factorization schemes such as the
@@ -125,13 +259,19 @@ void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 /* Generate a prime rop1 which is equal to 2 * rop2 + 1 where rop2 is also
  * prime */
 void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
-                           mp_bitcnt_t bitcnt)
+        mp_bitcnt_t bitcnt)
 {
     do {
         mpz_random_prime(rop1, rstate, bitcnt);
         mpz_sub_ui(rop2, rop1, 1);
         mpz_divexact_ui(rop2, rop2, 2);
     } while (mpz_probab_prime_p(rop2, 25) == 0);
+}
+
+void mpz_exp_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+        mp_bitcnt_t bitcnt)
+{
+    return;
 }
 
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike
@@ -159,3 +299,43 @@ void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
 
     mpz_clear(t);
 }
+
+#ifdef MAIN
+
+#include <time.h>
+
+#define time_process(code)\
+    do {\
+        clock_t start = clock(), diff;\
+        code\
+        diff = clock() - start;\
+        int msec = diff * 1000 / CLOCKS_PER_SEC;\
+        assert(mpz_probab_prime_p(t1, 25) != 0);\
+        printf("%s\n\t%ds:%dms\n\n", #code, msec / 1000, msec % 1000);\
+    } while (0)
+
+int main(void)
+{
+    /* Test and compare the speed of safe prime generation. */
+
+    mpz_t t1, t2;
+    gmp_randstate_t rstate;
+    mpz_inits(t1, t2);
+    gmp_randinit_default(rstate);
+
+    time_process( mpz_random_prime(t1, rstate, 512); );
+    time_process( mpz_random_prime(t1, rstate, 1024); );
+    time_process( mpz_random_prime(t1, rstate, 2048); );
+
+    time_process( mpze_random_prime(t1, rstate, 512); );
+    time_process( mpze_random_prime(t1, rstate, 1024); );
+    time_process( mpze_random_prime(t1, rstate, 2048); );
+
+    /*
+       time_process( mpz_random_safe_prime(t1, t2, rstate, 128); );
+       time_process( mpz_random_safe_prime(t1, t2, rstate, 256); );
+       time_process( mpz_exp_random_safe_prime(t1, t2, rstate, 128); );
+       time_process( mpz_exp_random_safe_prime(t1, t2, rstate, 256); );
+       */
+}
+#endif

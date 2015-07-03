@@ -35,16 +35,25 @@ void mpz_zero(mpz_t op);
  */
 void mpz_zeros(mpz_t op, ...);
 
+/* These are generally not called directly, except for testing purposes */
+void internal_fast_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt);
+void internal_naive_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt);
+void internal_naive_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+        mp_bitcnt_t bitcnt);
+void internal_fast_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+        mp_bitcnt_t bitcnt);
+
 /**
  * Generate a random prime @p rop of bit length > @p bitcnt
  */
-void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt);
+#define mpz_random_prime(rop1, rstate, bitcnt) \
+    internal_naive_random_prime(rop1, rstate, bitcnt)
 
 /**
  * Generate a random safe prime @p rop of bit length > @p bitcnt.
  */
-void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
-                           mp_bitcnt_t bitcnt);
+#define mpz_random_safe_prime(rop1, rop2, rstate, bitcnt) \
+    internal_naive_random_safe_prime(rop1, rop2, rstate, bitcnt)
 
 /**
  * Gather seed from OS' entropy pool and store in an mpz_t @p rop. All values

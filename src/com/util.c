@@ -279,13 +279,6 @@ void internal_fast_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rst
     } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
 
-/* Use a macro to choose which internal method we wish to use */
-#define mpz_random_prime(rop1, rop2, rstate, bitcnt) \
-    internal_naive_random_prime(rop1, rop2, rstate, bitcnt)
-
-#define mpz_random_safe_prime(rop1, rop2, rstate, bitcnt) \
-    internal_naive_random_safe_prime(rop1, rop2, rstate, bitcnt)
-
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike
  * other mpz functions rop must not be an aliased with any of the other
  * arguments! This is done to save excessive copying in this function, plus

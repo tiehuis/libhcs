@@ -12,6 +12,10 @@
 #include <gmp.h>
 #include "log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Error codes
 #define HCS_OK    0x0
 #define HCS_EOPEN 0x1
@@ -70,5 +74,9 @@ void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate,
  * result in @p rop.
  */
 void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

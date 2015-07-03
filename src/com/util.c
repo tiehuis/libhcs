@@ -112,7 +112,7 @@ void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op)
     mpz_clear(t1);
 }
 
-void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t bitcnt)
+static void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t bitcnt)
 {
     /* This function generates a value, pi, which minimizes the ratio
      * phi(pi) / pi by choosing all prime factors of small powers. Also,
@@ -140,7 +140,7 @@ void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t bitcnt)
     mpz_clear(p);
 }
 
-void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
+static void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
         mp_bitcnt_t bitcnt)
 {
     /* This function generates a value, pi, which minimizes the ratio
@@ -180,14 +180,14 @@ void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
     mpz_clear(t);
 }
 
-void generator_g_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
+static void generator_g_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
         gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
 }
 
 /* We should call a function which precomputes these values and then
  * pass them to this function ideally to avoid excessive computation */
-void generator_gd_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
+static void generator_gd_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
         gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
     mpz_t t1;
@@ -204,9 +204,8 @@ void generator_gd_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
     mpz_clear(t1);
 }
 
-void mpze_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+void internal_fast_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
-
     /* Wmax = 2^bitcnt - 1
      * Wmin = 2^(bitcnt-1) + 1
      */
@@ -230,7 +229,7 @@ void mpze_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
     generator_gd_precompute(pi, nu, lambda, rho, bitcnt);
     generator_gd_compute(c, pi, lambda, rstate, bitcnt);
 
-_2:
+loop:
     mpz_add(rop, c, rho);
     if (mpz_even_p(rop))
         mpz_add(rop, rop, nu);
@@ -238,7 +237,7 @@ _2:
     if (mpz_probab_prime_p(rop, 25) == 0) {
         mpz_mul_ui(c, c, 2);
         mpz_mod(c, c, pi);
-        goto _2;
+        goto loop;
     }
 
     mpz_clears(c, pi, lambda, rho, nu, NULL);
@@ -248,7 +247,7 @@ _2:
  * doesn't have any other requirements. Strong primes or anything generally
  * are not seen as too useful now, as newer factorization schemes such as the
  * GFNS are not disrupted by this prime choice. */
-void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
+void internal_naive_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
     /* Technically in small cases we could get a prime of n + 1 bits */
     mpz_urandomb(rop, rstate, bitcnt);
@@ -258,21 +257,34 @@ void mpz_random_prime(mpz_t rop, gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 
 /* Generate a prime rop1 which is equal to 2 * rop2 + 1 where rop2 is also
  * prime */
-void mpz_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+void internal_naive_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
         mp_bitcnt_t bitcnt)
 {
     do {
-        mpz_random_prime(rop1, rstate, bitcnt);
+        internal_fast_random_prime(rop1, rstate, bitcnt);
         mpz_sub_ui(rop2, rop1, 1);
         mpz_divexact_ui(rop2, rop2, 2);
     } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
 
-void mpz_exp_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
+void internal_fast_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,
         mp_bitcnt_t bitcnt)
 {
-    return;
+    /* We can improve this by using a variant which does not redo all the
+     * precomputation each prime, and with some other factors. */
+    do {
+        internal_naive_random_prime(rop1, rstate, bitcnt);
+        mpz_sub_ui(rop2, rop1, 1);
+        mpz_divexact_ui(rop2, rop2, 2);
+    } while (mpz_probab_prime_p(rop2, 25) == 0);
 }
+
+/* Use a macro to choose which internal method we wish to use */
+#define mpz_random_prime(rop1, rop2, rstate, bitcnt) \
+    internal_naive_random_prime(rop1, rop2, rstate, bitcnt)
+
+#define mpz_random_safe_prime(rop1, rop2, rstate, bitcnt) \
+    internal_naive_random_safe_prime(rop1, rop2, rstate, bitcnt)
 
 /* Chinese remainder theorem case where k = 2 using Bezout's identity. Unlike
  * other mpz functions rop must not be an aliased with any of the other
@@ -322,20 +334,20 @@ int main(void)
     gmp_randstate_t rstate;
     mpz_inits(t1, t2);
     gmp_randinit_default(rstate);
+    mpz_seed(t1, 128);
+    gmp_randseed(rstate, t1);
 
-    time_process( mpz_random_prime(t1, rstate, 512); );
-    time_process( mpz_random_prime(t1, rstate, 1024); );
-    time_process( mpz_random_prime(t1, rstate, 2048); );
+    time_process( internal_naive_random_prime(t1, rstate, 512); );
+    time_process( internal_naive_random_prime(t1, rstate, 1024); );
+    time_process( internal_naive_random_prime(t1, rstate, 2048); );
 
-    time_process( mpze_random_prime(t1, rstate, 512); );
-    time_process( mpze_random_prime(t1, rstate, 1024); );
-    time_process( mpze_random_prime(t1, rstate, 2048); );
+    time_process( internal_fast_random_prime(t1, rstate, 512); );
+    time_process( internal_fast_random_prime(t1, rstate, 1024); );
+    time_process( internal_fast_random_prime(t1, rstate, 2048); );
 
-    /*
-       time_process( mpz_random_safe_prime(t1, t2, rstate, 128); );
-       time_process( mpz_random_safe_prime(t1, t2, rstate, 256); );
-       time_process( mpz_exp_random_safe_prime(t1, t2, rstate, 128); );
-       time_process( mpz_exp_random_safe_prime(t1, t2, rstate, 256); );
-       */
+    time_process( internal_naive_random_safe_prime(t1, t2, rstate, 256); );
+    time_process( internal_naive_random_safe_prime(t1, t2, rstate, 512); );
+    time_process( internal_fast_random_safe_prime(t1, t2, rstate, 256); );
+    time_process( internal_fast_random_safe_prime(t1, t2, rstate, 512); );
 }
 #endif

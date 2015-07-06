@@ -8,7 +8,9 @@ Makefile*
 bin/*
 
 # Ignore all cmake build files
-*[cC][mM][aA][kK][eE]*
+Testing
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+CTestTestfile.cmake
 install_manifest.txt
-# Don't ignore CMakeList.txt, though!
-!CMakeLists.txt

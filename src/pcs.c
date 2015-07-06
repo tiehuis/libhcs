@@ -42,6 +42,7 @@
 #include <gmp.h>
 #include "libhcs/hcs_rand.h"
 #include "libhcs/pcs.h"
+#include "com/omp.h"
 #include "com/parson.h"
 #include "com/util.h"
 
@@ -107,16 +108,25 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
     mpz_add_ui(pk->g, pk->n, 1);
 #endif
 
-    mpz_sub_ui(vk->hp, vk->p, 1);
-    mpz_powm(vk->hp, pk->g, vk->hp, vk->p2);
-    mpz_sub_ui(vk->hp, vk->hp, 1);
-    mpz_tdiv_q(vk->hp, vk->hp, vk->p);
-    mpz_invert(vk->hp, vk->hp, vk->p);
-    mpz_sub_ui(vk->hq, vk->q, 1);
-    mpz_powm(vk->hq, pk->g, vk->hq, vk->q2);
-    mpz_sub_ui(vk->hq, vk->hq, 1);
-    mpz_tdiv_q(vk->hq, vk->hq, vk->q);
-    mpz_invert(vk->hq, vk->hq, vk->q);
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            mpz_sub_ui(vk->hp, vk->p, 1);
+            mpz_powm(vk->hp, pk->g, vk->hp, vk->p2);
+            mpz_sub_ui(vk->hp, vk->hp, 1);
+            mpz_tdiv_q(vk->hp, vk->hp, vk->p);
+            mpz_invert(vk->hp, vk->hp, vk->p);
+        }
+        #pragma omp section
+        {
+            mpz_sub_ui(vk->hq, vk->q, 1);
+            mpz_powm(vk->hq, pk->g, vk->hq, vk->q2);
+            mpz_sub_ui(vk->hq, vk->hq, 1);
+            mpz_tdiv_q(vk->hq, vk->hq, vk->q);
+            mpz_invert(vk->hq, vk->hq, vk->q);
+        }
+    }
 }
 
 void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r)
@@ -165,21 +175,29 @@ void pcs_decrypt(pcs_private_key *vk, mpz_t rop, mpz_t cipher1)
     mpz_init(t1);
     mpz_init(t2);
 
-    /* Calculate component mod p */
-    mpz_sub_ui(t1, vk->p, 1);
-    mpz_powm(t1, cipher1, t1, vk->p2);
-    mpz_sub_ui(t1, t1, 1);
-    mpz_tdiv_q(t1, t1, vk->p);
-    mpz_mul(t1, t1, vk->hp);
-    mpz_mod(t1, t1, vk->p);
-
-    /* Calculate component mod q */
-    mpz_sub_ui(t2, vk->q, 1);
-    mpz_powm(t2, cipher1, t2, vk->q2);
-    mpz_sub_ui(t2, t2, 1);
-    mpz_tdiv_q(t2, t2, vk->q);
-    mpz_mul(t2, t2, vk->hq);
-    mpz_mod(t2, t2, vk->q);
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            /* Calculate component mod p */
+            mpz_sub_ui(t1, vk->p, 1);
+            mpz_powm(t1, cipher1, t1, vk->p2);
+            mpz_sub_ui(t1, t1, 1);
+            mpz_tdiv_q(t1, t1, vk->p);
+            mpz_mul(t1, t1, vk->hp);
+            mpz_mod(t1, t1, vk->p);
+        }
+        #pragma omp section
+        {
+            /* Calculate component mod q */
+            mpz_sub_ui(t2, vk->q, 1);
+            mpz_powm(t2, cipher1, t2, vk->q2);
+            mpz_sub_ui(t2, t2, 1);
+            mpz_tdiv_q(t2, t2, vk->q);
+            mpz_mul(t2, t2, vk->hq);
+            mpz_mod(t2, t2, vk->q);
+        }
+    }
 
     /* Combine to form mod n */
     mpz_2crt(rop, t1, vk->p, t2, vk->q);

@@ -335,26 +335,3 @@ int djcs_import_private_key(djcs_private_key *vk, const char *json)
     mpz_invert(vk->mu, vk->mu, vk->n[vk->s-1]);
     return 0;
 }
-
-#ifdef MAIN
-int main(void)
-{
-    djcs_public_key *pk = djcs_init_public_key();
-    djcs_private_key *vk = djcs_init_private_key();
-    hcs_rand *hr = hcs_rand_init(0);
-
-    djcs_generate_key_pair(pk, vk, hr, 1, 256);
-
-    char *s1 = djcs_export_private_key(vk);
-    char *s2 = djcs_export_public_key(pk);
-
-    printf("%s\n%s\n", s2, s1);
-
-    free(s1);
-    free(s2);
-
-    djcs_free_public_key(pk);
-    djcs_free_private_key(vk);
-    hcs_rand_free(hr);
-}
-#endif

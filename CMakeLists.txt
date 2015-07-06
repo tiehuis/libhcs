@@ -1,23 +1,14 @@
 cmake_minimum_required(VERSION 3.0) # Require 3.0 for endian test
 project(libhcs)
-include(TestBigEndian)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ".cmake")
 
-# BEGIN: dependencies
-# BEGIN: FindGMP.cmake
-if (GMP_INCLUDE_DIR AND GMP_LIBRARIES)
-    # Already in cache, be silent
-    set(GMP_FIND_QUIETLY TRUE)
-endif (GMP_INCLUDE_DIR AND GMP_LIBRARIES)
-
-find_path(GMP_INCLUDE_DIR NAMES gmp.h)
-find_path(GMPXX_INCLUDE_DIR NAMES gmpxx.h)
-find_library(GMP_LIBRARIES NAMES gmp libgmp)
-find_library(GMPXX_LIBRARIES NAMES gmpxx libgmpxx)
-message(STATUS "GMP libs: " ${GMP_LIBRARIES} " " ${GMPXX_LIBRARIES} )
-
-mark_as_advanced(GMP_INCLUDE_DIR GMP_LIBRARIES GMPXX_INCLUDE_DIR GMPXX_LIBRARIES)
-# END: FindGMP.cmake
-# END: dependencies
+execute_process(COMMAND ${CMAKE_C_COMPILER} -v)
+find_package(GMP REQUIRED)
+find_package(OpenMP)
+if (OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CXXMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+endif()
 
 set(LIBRARY_NAME "hcs")
 set(LIBRARY_DIR "lib")
@@ -31,8 +22,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BINARY_DIR})
 # BEGIN: Project configuration
 file(GLOB srcs "src/*.c" "src/com/*.c")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -Wall -Wextra -std=c99 -Iinclude")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -Wall -Wextra -std=c++11 -Iinclude")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11 -Iinclude")
 
+include(TestBigEndian)
 test_big_endian(IsBigEndian)
 if (${IsBigEndian})
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBIG_ENDIAN=4321 -DBYTE_ORDER=BIG_ENDIAN")
@@ -62,4 +54,4 @@ foreach(f ${test_srcs})
     target_link_libraries(${test_prog} hcs ${GMP_LIBRARIES} ${GMPXX_LIBRARIES})
     add_test(${test_prog} "${BINARY_DIR}/${test_prog}")
 endforeach()
-# END: Test commands
+# EN: Test commands

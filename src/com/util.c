@@ -316,7 +316,7 @@ void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
         diff = clock() - start;\
         int msec = diff * 1000 / CLOCKS_PER_SEC;\
         assert(mpz_probab_prime_p(t1, 25) != 0);\
-        printf("%s\n\t%ds:%dms\n\n", #code, msec / 1000, msec % 1000);\
+        printf("%ds:%dms ", msec / 1000, msec % 1000);\
     } while (0)
 
 int main(void)
@@ -333,14 +333,25 @@ int main(void)
     time_process( internal_naive_random_prime(t1, rstate, 512); );
     time_process( internal_naive_random_prime(t1, rstate, 1024); );
     time_process( internal_naive_random_prime(t1, rstate, 2048); );
+    printf("(Naive)\n");
 
     time_process( internal_fast_random_prime(t1, rstate, 512); );
     time_process( internal_fast_random_prime(t1, rstate, 1024); );
     time_process( internal_fast_random_prime(t1, rstate, 2048); );
+    printf("(Fast)\n");
 
+    /*
+    printf("NaiveSafe ");
+    time_process( internal_naive_random_safe_prime(t1, t2, rstate, 128); );
     time_process( internal_naive_random_safe_prime(t1, t2, rstate, 256); );
     time_process( internal_naive_random_safe_prime(t1, t2, rstate, 512); );
+    printf("\n");
+
+    printf("FastSafe: ");
+    time_process( internal_fast_random_safe_prime(t1, t2, rstate, 128); );
     time_process( internal_fast_random_safe_prime(t1, t2, rstate, 256); );
     time_process( internal_fast_random_safe_prime(t1, t2, rstate, 512); );
+    printf("\n");
+    */
 }
 #endif

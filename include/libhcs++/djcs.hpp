@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <gmpxx.h>
-#include <libhcs/djcs.h>
+#include "../libhcs/djcs.h"
 #include "rand.hpp"
 
 /*

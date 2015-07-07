@@ -40,8 +40,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include "libhcs/hcs_rand.h"
-#include "libhcs/pcs.h"
+#include <libhcs/hcs_rand.h>
+#include <libhcs/pcs.h>
 #include "com/omp.h"
 #include "com/parson.h"
 #include "com/util.h"

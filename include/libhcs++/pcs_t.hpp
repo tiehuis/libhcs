@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 #include <gmpxx.h>
-#include <libhcs/pcs_t.h>
+#include "../libhcs/pcs_t.h"
 #include "rand.hpp"
 
 namespace hcs {

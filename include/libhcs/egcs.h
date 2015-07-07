@@ -91,6 +91,14 @@ void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk,
 egcs_cipher* egcs_init_cipher(void);
 
 /**
+ * Copy value of op to rop.
+ *
+ * @param rop A pointer to an initialised egcs_cipher
+ * @param op A pointer to an initialised egcs_cipher
+ */
+void egcs_set(egcs_cipher *rop, egcs_cipher *op);
+
+/**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised egcs_public_key

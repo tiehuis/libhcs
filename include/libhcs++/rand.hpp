@@ -7,7 +7,7 @@
 #ifndef HCS_RAND_HPP
 #define HCS_RAND_HPP
 
-#include <libhcs/hcs_rand.h>
+#include "../libhcs/hcs_rand.h"
 
 namespace hcs {
 

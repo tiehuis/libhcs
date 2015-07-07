@@ -17,8 +17,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include "libhcs/hcs_rand.h"
-#include "libhcs/pcs_t.h"
+#include <libhcs/hcs_rand.h>
+#include <libhcs/pcs_t.h>
 #include "com/parson.h"
 #include "com/util.h"
 

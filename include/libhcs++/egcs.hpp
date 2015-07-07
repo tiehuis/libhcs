@@ -17,6 +17,7 @@
 #define HCS_EGCS_HPP
 
 #include <gmpxx.h>
+#include "../libhcs/egcs.h"
 #include "rand.hpp"
 
 namespace hcs {
@@ -36,12 +37,17 @@ public:
         egcs_free_cipher(c);
     }
 
-    egcs_cipher* as_ptr() {
+    egcs_cipher* as_ptr() const {
         return c;
     }
 
-    clear() {
+    void clear() {
         egcs_clear_cipher(c);
+    }
+
+    cipher& operator=(const cipher &o) {
+        egcs_set(this->c, o.as_ptr());
+        return *this;
     }
 };
 
@@ -72,12 +78,16 @@ public:
     }
 
     /* Encryption functions acting on a key */
-    void encrypt(cipher &rop, mpz_class &op) {
+    cipher encrypt(mpz_class &op) {
+        cipher rop;
         egcs_encrypt(pk, hr->as_ptr(), rop.as_ptr(), op.get_mpz_t());
+        return rop;
     }
 
-    void ee_mul(cipher &rop, cipher &c1, cipher &c2) {
+    cipher ee_mul(cipher &c1, cipher &c2) {
+        cipher rop;
         egcs_ee_mul(pk, rop.as_ptr(), c1.as_ptr(), c2.as_ptr());
+        return rop;
     }
 
     void clear() {
@@ -113,12 +123,14 @@ public:
     }
 
     /* Encryption functions acting on a key */
-    void decrypt(mpz_class &rop, egcs_cipher &op) {
+    mpz_class decrypt(cipher &op) {
+        mpz_class rop;
         egcs_decrypt(vk, rop.get_mpz_t(), op.as_ptr());
+        return rop;
     }
 
     void clear() {
-        egcs_clear_private_key(pk);
+        egcs_clear_private_key(vk);
     }
 };
 
@@ -130,3 +142,4 @@ inline void generate_key_pair(public_key &pk, private_key &vk,
 }
 }
 
+#endif

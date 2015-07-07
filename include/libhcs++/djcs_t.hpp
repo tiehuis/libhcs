@@ -20,6 +20,7 @@
 
 #include <string>
 #include <gmpxx.h>
+#include "../libhcs/djcs_t.h"
 #include "rand.hpp"
 
 namespace hcs {

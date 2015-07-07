@@ -8,9 +8,9 @@
 
 #include <stdio.h>
 #include <gmp.h>
+#include <libhcs/hcs_rand.h>
+#include <libhcs/egcs.h>
 #include "com/util.h"
-#include "libhcs/hcs_rand.h"
-#include "libhcs/egcs.h"
 
 egcs_public_key* egcs_init_public_key(void)
 {
@@ -56,6 +56,12 @@ egcs_cipher* egcs_init_cipher(void)
 
     mpz_inits(ct->c1, ct->c2, NULL);
     return ct;
+}
+
+void egcs_set(egcs_cipher *rop, egcs_cipher *op)
+{
+    mpz_set(rop->c1, op->c1);
+    mpz_set(rop->c2, op->c2);
 }
 
 void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop,

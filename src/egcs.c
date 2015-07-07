@@ -11,6 +11,7 @@
 #include <libhcs/hcs_rand.h>
 #include <libhcs/egcs.h>
 #include "com/util.h"
+#include "com/omp.h"
 
 egcs_public_key* egcs_init_public_key(void)
 {
@@ -74,10 +75,20 @@ void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop,
     mpz_urandomm(t, hr->rstate, pk->q);
     mpz_add_ui(t, t, 1);
     mpz_add_ui(pk->q, pk->q, 1);
-    mpz_powm(rop->c1, pk->g, t, pk->q);
-    mpz_powm(rop->c2, pk->h, t, pk->q);
-    mpz_mul(rop->c2, rop->c2, plain1);
-    mpz_mod(rop->c2, rop->c2, pk->q);
+
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            mpz_powm(rop->c1, pk->g, t, pk->q);
+        }
+        #pragma omp section
+        {
+            mpz_powm(rop->c2, pk->h, t, pk->q);
+            mpz_mul(rop->c2, rop->c2, plain1);
+            mpz_mod(rop->c2, rop->c2, pk->q);
+        }
+    }
 
     mpz_clear(t);
 }
@@ -85,10 +96,19 @@ void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop,
 void egcs_ee_mul(egcs_public_key *pk, egcs_cipher *rop, egcs_cipher *ct1,
         egcs_cipher *ct2)
 {
-    mpz_mul(rop->c1, ct1->c1, ct2->c2);
-    mpz_mod(rop->c1, rop->c1, pk->q);
-    mpz_mul(rop->c2, ct1->c2, ct2->c2);
-    mpz_mod(rop->c2, rop->c2, pk->q);
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            mpz_mul(rop->c1, ct1->c1, ct2->c2);
+            mpz_mod(rop->c1, rop->c1, pk->q);
+        }
+        #pragma omp section
+        {
+            mpz_mul(rop->c2, ct1->c2, ct2->c2);
+            mpz_mod(rop->c2, rop->c2, pk->q);
+        }
+    }
 }
 
 void egcs_decrypt(egcs_private_key *vk, mpz_t rop, egcs_cipher *ct)
@@ -145,36 +165,3 @@ void egcs_free_private_key(egcs_private_key *vk)
     mpz_clear(vk->q);
     free(vk);
 }
-
-#ifdef MAIN
-int main(void)
-{
-    egcs_private_key *vk = egcs_init_private_key();
-    egcs_public_key *pk = egcs_init_public_key();
-    hcs_rand *hr = hcs_rand_init(0);
-
-    egcs_generate_key_pair(pk, vk, hr, 128);
-
-    mpz_t a, b;
-    egcs_cipher *c = egcs_init_cipher();
-    egcs_cipher *d = egcs_init_cipher();
-    mpz_init_set_ui(a, 10);
-    mpz_init_set_ui(b, 7);
-
-    egcs_encrypt(pk, hr, c, a);
-    egcs_encrypt(pk, hr, d, b);
-    //egcs_ee_mul(pk, c, c, d);
-    egcs_decrypt(vk, a, c);
-
-    gmp_printf("%Zd\n", c);
-
-    mpz_clear(a);
-    mpz_clear(b);
-    egcs_free_cipher(c);
-    egcs_free_cipher(d);
-
-    egcs_free_public_key(pk);
-    egcs_free_private_key(vk);
-    hcs_rand_free(hr);
-}
-#endif

@@ -31,16 +31,13 @@ extern "C" {
  * variants, and even the single value versions.
  */
 typedef struct {
-    mpz_t e1;
-    mpz_t e2;
-    mpz_t u1;
-    mpz_t u2;
-    mpz_t a1;
-    mpz_t a2;
-    mpz_t z1;
-    mpz_t z2;
+    mpz_t e[2];
+    mpz_t u[2];
+    mpz_t a[2];
+    mpz_t z[2];
     unsigned long m1;
     unsigned long m2;
+    mpz_t generator;
 } pcs_t_proof;
 
 /**
@@ -242,7 +239,7 @@ pcs_t_proof* pcs_t_init_proof(void);
  * @param pf A pointer to an initialised pcs_t_proof object
  * @param r mpz_t value to set the proof to check for
  */
-void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, unsigned long m1,
+void pcs_t_set_proof(pcs_t_proof *pf, unsigned long m1,
         unsigned long m2);
 
 /**
@@ -261,8 +258,8 @@ void pcs_t_set_proof(pcs_t_public_key *pk, pcs_t_proof *pf, unsigned long m1,
  * @param v mpz_t value which was used to encrypt the plaintext @p u
  * @param id User id in the system. This can be discarded by using the value 0.
  */
-void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
-        pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id);
+void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+        pcs_t_proof *pf, mpz_t cipher_m, mpz_t cipher_r, unsigned long nth_power, unsigned long id);
 
 /**
  * Verify a proof and return whether it is an n'th power.
@@ -281,8 +278,8 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
  * @todo Determine exactly what the @p c1 and @cr1 parameters refer to and how
  * best to retrieve them from a given value.
  */
-void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
-        pcs_t_proof *pf, mpz_t c1, mpz_t cr1, unsigned long k, unsigned long id);
+int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
+        unsigned long nth_power, unsigned long id);
 
 /**
  * Frees a pcs_t proof object and all values associated with it.
@@ -389,7 +386,7 @@ void pcs_t_share_decrypt(pcs_t_public_key *vk, pcs_t_auth_server *au,
  * @param rop mpz_t where the combined decrypted result is stored
  * @param c array of share values
  */
-int pcs_t_share_combine(pcs_t_public_key *vk, mpz_t rop, mpz_t *c);
+int pcs_t_share_combine(pcs_t_public_key *vk, mpz_t rop, hcs_shares *hs);
 
 /**
  * Frees a pcs_t_auth_server and all associated memory.

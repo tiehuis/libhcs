@@ -5,7 +5,9 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <gmp.h>
+#include "ripemd160.h"
 #include "util.h"
 
 #ifdef _WIN32
@@ -305,7 +307,71 @@ void mpz_2crt(mpz_t rop, mpz_t con1_a, mpz_t con1_m, mpz_t con2_a, mpz_t con2_m)
     mpz_clear(t);
 }
 
-#ifdef MAIN
+/* Hash an mpz_t value and an unsigned long using ripemd160, and store a
+ * corresponding integer into rop. Care is taken to ensure that this is
+ * cross-platform and doesn't depend on the order of bytes. */
+void mpz_ripemd_mpz_ul(mpz_t rop, mpz_t op1, unsigned long op2) {
+    ripemd160_state ctx;
+    ripemd160_init(&ctx);
+
+    size_t countp;
+    unsigned char *datap = mpz_export(NULL, &countp, 1, 1, -1, 0, op1);
+    ripemd160_update(&ctx, datap, countp);
+    free(datap);
+
+    // Ripemd160 function will handle different byte ordering for different
+    // endian machines.
+    const uint64_t op2_u64 = (uint64_t) op2;
+    unsigned char *op2_cp = (unsigned char*)&op2_u64;
+    ripemd160_update(&ctx, op2_cp, 8);
+
+    unsigned char hdigest[RIPEMD160_DIGEST_SIZE];
+    ripemd160_digest(&ctx, hdigest);
+    mpz_import(rop, RIPEMD160_DIGEST_SIZE, 1, 1, -1, 0, hdigest);
+}
+
+#define HCS_MALLOC_BYTES_REQ(mpz) ((mpz_sizeinbase(mpz, 2) + 7) / 8) * 8
+
+void mpz_ripemd_3mpz_ul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t op3, unsigned long op4) {
+    ripemd160_state ctx;
+    ripemd160_init(&ctx);
+
+    size_t countp;
+    unsigned char *datap;
+
+    const size_t
+        s1 = ((mpz_sizeinbase(op1, 2) + 7) / 8) * 8,
+        s2 = ((mpz_sizeinbase(op2, 2) + 7) / 8) * 8,
+        s3 = ((mpz_sizeinbase(op3, 2) + 7) / 8) * 8;
+
+    const size_t
+    toalloc = s1 > s2
+                ? s1 > s3
+                    ? s1 : s3
+                : s2 > s3
+                    ? s2 : s3;
+
+    datap = malloc(toalloc);
+    mpz_export(datap, &countp, 1, 1, -1, 0, op1);
+    ripemd160_update(&ctx, datap, countp);
+    mpz_export(datap, &countp, 1, 1, -1, 0, op2);
+    ripemd160_update(&ctx, datap, countp);
+    mpz_export(datap, &countp, 1, 1, -1, 0, op3);
+    ripemd160_update(&ctx, datap, countp);
+    free(datap);
+
+    // Ripemd160 function will handle different byte ordering for different
+    // endian machines.
+    const uint64_t op4_u64 = (uint64_t) op4;
+    unsigned char *op4_cp = (unsigned char*)&op4_u64;
+    ripemd160_update(&ctx, op4_cp, 8);
+
+    unsigned char hdigest[RIPEMD160_DIGEST_SIZE];
+    ripemd160_digest(&ctx, hdigest);
+    mpz_import(rop, RIPEMD160_DIGEST_SIZE, 1, 1, -1, 0, hdigest);
+}
+
+#ifdef UTIL_MAIN
 
 #include <time.h>
 

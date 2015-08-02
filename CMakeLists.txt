@@ -27,9 +27,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11 -Iinclude")
 include(TestBigEndian)
 test_big_endian(IsBigEndian)
 if (${IsBigEndian})
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DBIG_ENDIAN=4321 -DBYTE_ORDER=BIG_ENDIAN")
-else ()
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DLITTLE_ENDIAN=1234 -DBYTE_ORDER=LITTLE_ENDIAN")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DHCS_BIG_ENDIAN")
 endif (${IsBigEndian})
 # END: Project configuration
 

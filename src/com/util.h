@@ -84,6 +84,9 @@ void mpz_random_dsa_prime(mpz_t rop, gmp_randstate_t rstate,
  */
 void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op);
 
+void mpz_ripemd_mpz_ul(mpz_t rop, mpz_t op1, unsigned long op2);
+void mpz_ripemd_3mpz_ul(mpz_t rop, mpz_t op1, mpz_t op2, mpz_t op3, unsigned long op4);
+
 #ifdef __cplusplus
 }
 #endif

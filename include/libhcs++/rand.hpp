@@ -1,20 +1,20 @@
 /**
- * @file hcs_rand.hpp
+ * @file hcs_random.hpp
  *
- * C++ wrapper class for the hcs_rand object.
+ * C++ wrapper class for the hcs_random object.
  */
 
 #ifndef HCS_RAND_HPP
 #define HCS_RAND_HPP
 
-#include "../libhcs/hcs_rand.h"
+#include "../libhcs/hcs_random.h"
 
 namespace hcs {
 
 class rand {
 
 private:
-    hcs_rand *hr;
+    hcs_random *hr;
     int refcount;   // Counts the number of times this particular instance is counted
 
 public:
@@ -42,7 +42,7 @@ public:
         return refcount != 0;
     }
 
-    hcs_rand* as_ptr() {
+    hcs_random* as_ptr() {
         return hr;
     }
 };

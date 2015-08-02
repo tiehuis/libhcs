@@ -17,7 +17,7 @@
 #define HCS_EGCS_H
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "hcs_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,11 +76,11 @@ egcs_private_key* egcs_init_private_key(void);
  *
  * @param pk A pointer to an initialised egcs_public_key
  * @param vk A pointer to an initialised egcs_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param bits The number of bits for the modulus of the key
  */
 void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk,
-                            hcs_rand *hr, const unsigned long bits);
+                            hcs_random *hr, const unsigned long bits);
 
 /**
  * Initialise a egcs_cipher and return a pointer to the newly created
@@ -102,11 +102,11 @@ void egcs_set(egcs_cipher *rop, egcs_cipher *op);
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised egcs_public_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop egcs_cipher where the result is to be stored
  * @param plain1 mpz_t to be encrypted
  */
-void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop,
+void egcs_encrypt(egcs_public_key *pk, hcs_random *hr, egcs_cipher *rop,
                   mpz_t plain1);
 
 /**

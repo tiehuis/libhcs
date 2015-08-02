@@ -18,7 +18,7 @@
 #include <string.h>
 #include <gmp.h>
 
-#include "../include/libhcs/hcs_rand.h"
+#include "../include/libhcs/hcs_random.h"
 #include "../include/libhcs/hcs_shares.h"
 #include "../include/libhcs/pcs_t.h"
 #include "com/parson.h"
@@ -57,7 +57,7 @@ pcs_t_private_key* pcs_t_init_private_key(void)
 /* Look into methods of using multiparty computation to generate these keys
  * and the data so we don't have to have a trusted party for generation. */
 int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
-        hcs_rand *hr, const unsigned long bits, const unsigned long w,
+        hcs_random *hr, const unsigned long bits, const unsigned long w,
         const unsigned long l)
 {
     /* The paper does describe some bounds on w, l */
@@ -105,7 +105,7 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
     return 1;
 }
 
-void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_rand *hr,
+void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_random *hr,
         mpz_t r, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
@@ -133,7 +133,7 @@ void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t rop, mpz_t r, mpz_t plain1)
     mpz_clear(t1);
 }
 
-void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+void pcs_t_encrypt(pcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -147,7 +147,7 @@ void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
     mpz_clear(t1);
 }
 
-void pcs_t_reencrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
+void pcs_t_reencrypt(pcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -200,7 +200,7 @@ void pcs_t_set_proof(pcs_t_proof *pf, unsigned long m1,
     pf->m2 = m2;
 }
 
-void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
         pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id)
 {
     mpz_t r, e, _0 ;
@@ -269,7 +269,7 @@ failure:
     return retval;
 }
 
-void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
         pcs_t_proof *pf, mpz_t cipher_m, mpz_t cipher_r, unsigned long nth_power, unsigned long id)
 {
     mpz_t encrypt_value, other_value;
@@ -404,7 +404,7 @@ void pcs_t_free_proof(pcs_t_proof *pf)
     free(pf);
 }
 
-pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr)
+pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_random *hr)
 {
     pcs_t_polynomial *px;
 
@@ -663,7 +663,7 @@ int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
 int main(void) {
     pcs_t_private_key *vk = pcs_t_init_private_key();
     pcs_t_public_key *pk = pcs_t_init_public_key();
-    hcs_rand *hr = hcs_init_rand();
+    hcs_random *hr = hcs_init_rand();
 
     pcs_t_generate_key_pair(pk, vk, hr, 128, 2, 4);
 

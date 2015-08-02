@@ -20,8 +20,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include <libhcs/hcs_rand.h>
-#include <libhcs/djcs_t.h>
+
+#include "../include/libhcs/hcs_random.h"
+#include "../include/libhcs/djcs_t.h"
 #include "com/util.h"
 
 static void dlog_s(djcs_t_private_key *vk, mpz_t rop, mpz_t op)
@@ -106,7 +107,7 @@ djcs_t_private_key* djcs_t_init_private_key(void)
 
 /* Look into methods of using multiparty computation to generate these keys and
  * the data such that we don't have to have a trusted party for generation. */
-void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk, hcs_rand *hr,
+void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk, hcs_random *hr,
         const unsigned long s,
         const unsigned long bits, const unsigned long w, const unsigned long l)
 {
@@ -175,7 +176,7 @@ void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk, hcs
     mpz_clear(t2);
 }
 
-void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+void djcs_t_encrypt(djcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -189,7 +190,7 @@ void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1
     mpz_clear(t1);
 }
 
-void djcs_t_reencrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
+void djcs_t_reencrypt(djcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -226,7 +227,7 @@ void djcs_t_ep_mul(djcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1
     mpz_powm(rop, cipher1, plain1, pk->n[pk->s]);
 }
 
-mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_rand *hr)
+mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_random *hr)
 {
     mpz_t *coeff = malloc(sizeof(mpz_t) * vk->w);
     if (coeff == NULL) return NULL;

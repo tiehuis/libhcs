@@ -8,8 +8,9 @@
 
 #include <stdio.h>
 #include <gmp.h>
-#include <libhcs/hcs_rand.h>
-#include <libhcs/egcs.h>
+
+#include "../include/libhcs/hcs_random.h"
+#include "../include/libhcs/egcs.h"
 #include "com/util.h"
 #include "com/omp.h"
 
@@ -32,7 +33,7 @@ egcs_private_key* egcs_init_private_key(void)
 }
 
 void egcs_generate_key_pair(egcs_public_key *pk, egcs_private_key *vk,
-        hcs_rand *hr, const unsigned long bits)
+        hcs_random *hr, const unsigned long bits)
 {
     mpz_t t;
     mpz_init(t);
@@ -65,7 +66,7 @@ void egcs_set(egcs_cipher *rop, egcs_cipher *op)
     mpz_set(rop->c2, op->c2);
 }
 
-void egcs_encrypt(egcs_public_key *pk, hcs_rand *hr, egcs_cipher *rop,
+void egcs_encrypt(egcs_public_key *pk, hcs_random *hr, egcs_cipher *rop,
                   mpz_t plain1)
 {
     mpz_t t;

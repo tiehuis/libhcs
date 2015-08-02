@@ -11,7 +11,7 @@
 #define HCS_DJCS_H
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "hcs_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,12 +76,12 @@ djcs_private_key* djcs_init_private_key(void);
  *
  * @param pk A pointer to an initialised djcs_public_key
  * @param vk A pointer to an initialised djcs_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param s The size exponent for the ciphertext space we wish to work in
  * @param bits The number of bits for the modulus of the key
  */
 int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
-                           hcs_rand *hr, unsigned long s, unsigned long bits);
+                           hcs_random *hr, unsigned long s, unsigned long bits);
 
 /**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
@@ -90,7 +90,7 @@ int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
+void djcs_encrypt(djcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1);
 
 /**
  * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
@@ -100,7 +100,7 @@ void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
-void djcs_reencrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op);
+void djcs_reencrypt(djcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op);
 
 /**
  * Add a plaintext value @p plain1 to an encrypted value @p cipher1, storing

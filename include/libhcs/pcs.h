@@ -17,7 +17,7 @@
 #define HCS_PCS_H
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "hcs_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -77,17 +77,17 @@ pcs_private_key* pcs_init_private_key(void);
  * @code
  * pcs_public_key *pk = pcs_init_public_key();
  * pcs_private_key *vk = pcs_init_private_key();
- * hcs_rand = hcs_rand_init();
+ * hcs_random = hcs_random_init();
  * pcs_generate_key(pk, vk, hr, 2048);
  * @endcode
  *
  * @param pk A pointer to an initialised pcs_public_key
  * @param vk A pointer to an initialised pcs_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param bits The number of bits for the modulus of the key
  */
 void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
-                           hcs_rand *hr, const unsigned long bits);
+                           hcs_random *hr, const unsigned long bits);
 
 /**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
@@ -96,7 +96,7 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
+void pcs_encrypt(pcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1);
 
 /**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result. Do not
@@ -118,7 +118,7 @@ void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r);
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
-void pcs_reencrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op);
+void pcs_reencrypt(pcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op);
 
 /**
  * Add a plaintext value @p plain1 to an encrypted value @p cipher1, storing

@@ -8,8 +8,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include <libhcs/hcs_rand.h>
-#include <libhcs/djcs.h>
+
+#include "../include/libhcs/hcs_random.h"
+#include "../include/libhcs/djcs.h"
 #include "com/parson.h"
 #include "com/util.h"
 
@@ -86,7 +87,7 @@ djcs_private_key* djcs_init_private_key(void)
 }
 
 int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
-                           hcs_rand *hr, unsigned long s, unsigned long bits)
+                           hcs_random *hr, unsigned long s, unsigned long bits)
 {
     mpz_t p, q;
 
@@ -129,7 +130,7 @@ int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
     return 0;
 }
 
-void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+void djcs_encrypt(djcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -143,7 +144,7 @@ void djcs_encrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
     mpz_clear(t1);
 }
 
-void djcs_reencrypt(djcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
+void djcs_reencrypt(djcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op)
 {
     mpz_t t1;
     mpz_init(t1);

@@ -40,8 +40,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <gmp.h>
-#include <libhcs/hcs_rand.h>
-#include <libhcs/pcs.h>
+
+#include "../include/libhcs/hcs_random.h"
+#include "../include/libhcs/pcs.h"
 #include "com/omp.h"
 #include "com/parson.h"
 #include "com/util.h"
@@ -64,7 +65,7 @@ pcs_private_key* pcs_init_private_key(void)
 }
 
 void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
-                           hcs_rand *hr, const unsigned long bits)
+                           hcs_random *hr, const unsigned long bits)
 {
     /* This key generation function uses some assumptions in calculating the
      * key values. Primarily based on p and q being similar bit lengths. */
@@ -148,7 +149,7 @@ void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r)
     mpz_clear(t1);
 }
 
-void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
+void pcs_encrypt(pcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -172,7 +173,7 @@ void pcs_encrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1)
     mpz_clear(t1);
 }
 
-void pcs_reencrypt(pcs_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op)
+void pcs_reencrypt(pcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op)
 {
     mpz_t t1;
     mpz_init(t1);

@@ -1,7 +1,8 @@
 #include <assert.h>
 #include <stdlib.h>
-#include <libhcs/hcs_shares.h>
 #include <gmp.h>
+
+#include "../include/libhcs/hcs_shares.h"
 
 hcs_shares* hcs_init_shares(unsigned long size)
 {

@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gmp.h>
-#include "log.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,8 +21,6 @@ extern "C" {
 #define HCS_EREAD 0x2
 
 #define HCS_INTERNAL_BASE 62
-
-#define err(fmt, ...) fprintf(stderr, fmt "\n", ## __VA_ARGS__ ), abort()
 
 /**
  * Zeroes a all memory allocated to a mpz_t @p op.

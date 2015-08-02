@@ -48,7 +48,7 @@ public:
         return pk;
     }
 
-    hcs_rand* get_rand() {
+    hcs_random* get_rand() {
         return hr->as_ptr();
     }
 
@@ -108,7 +108,7 @@ public:
         return vk;
     }
 
-    hcs_rand* get_rand() {
+    hcs_random* get_rand() {
         return hr->as_ptr();
     }
 
@@ -169,7 +169,7 @@ public:
         return pk;
     }
 
-    hcs_rand* get_rand() {
+    hcs_random* get_rand() {
         return hr->as_ptr();
     }
 

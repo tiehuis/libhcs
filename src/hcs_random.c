@@ -1,5 +1,5 @@
 /**
- * @file hcs_rand.c
+ * @file hcs_random.c
  *
  * Provides easy to use random state functions, that are required
  * for all probablistic schemes.
@@ -11,14 +11,15 @@
  */
 
 #include <gmp.h>
-#include <libhcs/hcs_rand.h>
+
+#include "../include/libhcs/hcs_random.h"
 #include "com/util.h"
 
 /* Currently one can set the seed. This is used only for testing and will
    be altered at a latter time to take no arguments. */
-hcs_rand* hcs_init_rand(void)
+hcs_random* hcs_init_rand(void)
 {
-    hcs_rand *hr = malloc(sizeof(hcs_rand));
+    hcs_random *hr = malloc(sizeof(hcs_random));
     if (hr == NULL) return NULL;
 
     mpz_t t1;
@@ -33,7 +34,7 @@ hcs_rand* hcs_init_rand(void)
     return hr;
 }
 
-int hcs_reseed_rand(hcs_rand *hr)
+int hcs_reseed_rand(hcs_random *hr)
 {
     // Currently assume we get values correctly. We should check that we
     // read correctly and alter mpz_seed to return a status code.
@@ -52,7 +53,7 @@ int hcs_reseed_rand(hcs_rand *hr)
     return 1;
 }
 
-void hcs_free_rand(hcs_rand *hr)
+void hcs_free_rand(hcs_random *hr)
 {
     gmp_randclear(hr->rstate);
     free(hr);

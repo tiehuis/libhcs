@@ -19,7 +19,7 @@
 #define HCS_PCS_T_H
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "hcs_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -127,26 +127,26 @@ pcs_t_private_key* pcs_t_init_private_key(void);
  * @code
  * pcs_t_public_key *pk = pcs_t_init_public_key();
  * pcs_t_private_key *vk = pcs_t_init_private_key();
- * hcs_rand = hcs_rand_init();
+ * hcs_random = hcs_random_init();
  * pcs_t_generate_key(pk, vk, hr, 2048, 5, 7);
  * @endcode
  *
  * @param pk A pointer to an initialised pcs_t_public_key
  * @param vk A pointer to an initialised pcs_t_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param bits The number of bits for the modulus of the key
  * @param l The number of servers required to succesfully decrypt
  * @param w The number of servers in total
  * @return non-zero on success, zero on allocation failure
  */
 int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
-        hcs_rand *hr, const unsigned long bits, const unsigned long l,
+        hcs_random *hr, const unsigned long bits, const unsigned long l,
         const unsigned long w);
 
 /**
  * Encrypt a value @p plain1, and set @p rop to the encryted result. This
  * function uses the random value @p r, passed as a parameter by the caller
- * instead of generating a value with an hcs_rand object.
+ * instead of generating a value with an hcs_random object.
  *
  * @p r should be in the field Z_{n^2}*.
  *
@@ -163,23 +163,23 @@ void pcs_t_encrypt_r(pcs_t_public_key *pk, mpz_t rop, mpz_t r, mpz_t plain1);
  * this encryption is stored in the mpz_t variable, @p r.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param r mpz_t where the random value generated is stored
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_rand *hr,
+void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_random *hr,
         mpz_t r, mpz_t rop, mpz_t plain1);
 
 /**
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
+void pcs_t_encrypt(pcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1);
 
 /**
  * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
@@ -189,7 +189,7 @@ void pcs_t_encrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t plain1);
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
-void pcs_t_reencrypt(pcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op);
+void pcs_t_reencrypt(pcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op);
 
 /**
  * Add a plaintext value @p plain1 to an encrypted value @p cipher1, storing
@@ -252,20 +252,20 @@ void pcs_t_set_proof(pcs_t_proof *pf, unsigned long m1,
  * queried to determine if @u is an encryption of an n'th power.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
- * @param hr A pointer to an initialised hcs_rand object
+ * @param hr A pointer to an initialised hcs_random object
  * @param pf A pointer to an initialised pcs_t_proof object
  * @param u mpz_t value to construct the proof for
  * @param v mpz_t value which was used to encrypt the plaintext @p u
  * @param id User id in the system. This can be discarded by using the value 0.
  */
-void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_rand *hr,
+void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
         pcs_t_proof *pf, mpz_t cipher_m, mpz_t cipher_r, unsigned long nth_power, unsigned long id);
 
 /**
  * Verify a proof and return whether it is an n'th power.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
- * @param pf A pointer to an initialised hcs_rand object
+ * @param pf A pointer to an initialised hcs_random object
  * @param id User id in the system.
  * @return 0 if not an n'th power, non-zero if it is an n'th power
  */
@@ -305,10 +305,10 @@ void pcs_t_free_proof(pcs_t_proof *pf);
  * @endcode
  *
  * @param vk A pointer to an initialised pcs_t_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @return A polynomial coefficient list on success, else NULL
  */
-pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_rand *hr);
+pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_random *hr);
 
 /**
  * Compute a polynomial P(x) for a given x value in the required finite field.

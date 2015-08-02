@@ -16,7 +16,7 @@
 #define HCS_DJCS_T_H
 
 #include <gmp.h>
-#include "hcs_rand.h"
+#include "hcs_random.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,7 +98,7 @@ djcs_t_private_key* djcs_t_init_private_key(void);
  * djcs_t_clear_private_key are called prior.
  */
 void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk,
-        hcs_rand *hr, const unsigned long s, const unsigned long bits,
+        hcs_random *hr, const unsigned long s, const unsigned long bits,
         const unsigned long l, const unsigned long w);
 
 /**
@@ -108,7 +108,7 @@ void djcs_t_generate_key_pair(djcs_t_public_key *pk, djcs_t_private_key *vk,
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
-void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop,
+void djcs_t_encrypt(djcs_t_public_key *pk, hcs_random *hr, mpz_t rop,
                     mpz_t plain1);
 
 /**
@@ -119,7 +119,7 @@ void djcs_t_encrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop,
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
-void djcs_t_reencrypt(djcs_t_public_key *pk, hcs_rand *hr, mpz_t rop, mpz_t op);
+void djcs_t_reencrypt(djcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t op);
 
 /**
  * Add a plaintext value @p plain1 to an encrypted value @p cipher1, storing
@@ -162,10 +162,10 @@ void djcs_t_ep_mul(djcs_t_public_key *pk, mpz_t rop, mpz_t cipher1, mpz_t plain1
  * can be discarded.
  *
  * @param vk v pointer to an initialised djcs_t_private_key
- * @param hr A pointer to an initialised hcs_rand type
+ * @param hr A pointer to an initialised hcs_random type
  * @return A polynomial coefficient list on success, else NULL
  */
-mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_rand *hr);
+mpz_t* djcs_t_init_polynomial(djcs_t_private_key *vk, hcs_random *hr);
 
 /**
  * Compute a polynomial P(x) for a given x value in the required finite field.

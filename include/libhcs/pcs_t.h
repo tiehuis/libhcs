@@ -20,6 +20,7 @@
 
 #include <gmp.h>
 #include "hcs_random.h"
+#include "hcs_shares.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -239,7 +240,7 @@ pcs_t_proof* pcs_t_init_proof(void);
  * @param pf A pointer to an initialised pcs_t_proof object
  * @param r mpz_t value to set the proof to check for
  */
-void pcs_t_set_proof(pcs_t_proof *pf, unsigned long m1,
+void pcs_t_set_proof(pcs_t_proof *pf, mpz_t generator, unsigned long m1,
         unsigned long m2);
 
 /**
@@ -279,7 +280,7 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
  * best to retrieve them from a given value.
  */
 int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
-        unsigned long nth_power, unsigned long id);
+        mpz_t cipher, unsigned long id);
 
 /**
  * Frees a pcs_t proof object and all values associated with it.
@@ -479,6 +480,10 @@ char *pcs_t_export_auth_server(pcs_t_auth_server *au);
  * @return 0 on success, non-zero on parse failure
  */
 int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json);
+
+char *pcs_t_export_verify_values(pcs_t_private_key *vk);
+
+int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json);
 
 #ifdef __cplusplus
 }

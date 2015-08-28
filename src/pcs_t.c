@@ -39,7 +39,10 @@ pcs_t_public_key* pcs_t_init_public_key(void)
     pcs_t_public_key *pk = malloc(sizeof(pcs_t_public_key));
     if (!pk) return NULL;
 
-    mpz_inits(pk->n, pk->n2, pk->g, pk->delta, NULL);
+    mpz_init(pk->n);
+    mpz_init(pk->n2);
+    mpz_init(pk->g);
+    mpz_init(pk->delta);
     return pk;
 }
 
@@ -49,8 +52,11 @@ pcs_t_private_key* pcs_t_init_private_key(void)
     if (!vk) return NULL;
 
     vk->w = vk->l = 0;
-    mpz_inits(vk->v, vk->nm, vk->n,
-              vk->n2, vk->d, NULL);
+    mpz_init(vk->v);
+    mpz_init(vk->nm);
+    mpz_init(vk->n);
+    mpz_init(vk->n2);
+    mpz_init(vk->d);
     return vk;
 }
 
@@ -106,7 +112,7 @@ int pcs_t_generate_key_pair(pcs_t_public_key *pk, pcs_t_private_key *vk,
 }
 
 void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_random *hr,
-        mpz_t r, mpz_t rop, mpz_t plain1)
+        mpz_t rop, mpz_t r, mpz_t plain1)
 {
     mpz_t t1;
     mpz_init(t1);
@@ -188,41 +194,54 @@ pcs_t_proof* pcs_t_init_proof(void)
 {
     pcs_t_proof *pf = malloc(sizeof(pcs_t_proof));
     if (pf == NULL) return NULL;
-    mpz_inits(pf->e[0], pf->e[1], pf->u[0], pf->u[1], pf->a[0], pf->a[1], pf->z[0], pf->z[1], pf->generator, NULL);
+
+    mpz_init(pf->e[0]);
+    mpz_init(pf->e[1]);
+    mpz_init(pf->u[0]);
+    mpz_init(pf->u[1]);
+    mpz_init(pf->a[0]);
+    mpz_init(pf->a[1]);
+    mpz_init(pf->z[0]);
+    mpz_init(pf->z[1]);
+    mpz_init(pf->generator);
+
+    /* Default values */
     mpz_set_ui(pf->generator, 97);
+    pf->m1 = 0;
+    pf->m2 = 1;
+
     return pf;
 }
 
-void pcs_t_set_proof(pcs_t_proof *pf, unsigned long m1,
+void pcs_t_set_proof(pcs_t_proof *pf, mpz_t generator, unsigned long m1,
         unsigned long m2)
 {
+    mpz_set(pf->generator, generator);
     pf->m1 = m1;
     pf->m2 = m2;
 }
 
 void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
-        pcs_t_proof *pf, mpz_t u, mpz_t v, unsigned long id)
+        pcs_t_proof *pf, mpz_t cipher, mpz_t cipher_r, unsigned long id)
 {
-    mpz_t r, e, _0 ;
-    mpz_init(r);
-    mpz_init(e);
-    mpz_init_set_ui(_0, 0);
+    mpz_t challenge, t1;
+    mpz_init(challenge);
+    mpz_init(t1);
 
-    mpz_set(pf->u[0], u);
+    mpz_set(pf->u[0], cipher);
 
     // Random r in Zn* and a = E(0, r)
-    pcs_t_r_encrypt(pk, hr, r, pf->a[0], _0);
+    mpz_set_ui(t1, 0);
+    pcs_t_r_encrypt(pk, hr, t1, pf->a[0], t1);
 
-    mpz_ripemd_mpz_ul(e, pf->a[0], id);
+    mpz_ripemd_mpz_ul(challenge, pf->a[0], id);
 
-    mpz_powm(pf->z[0], v, e, pk->n);
-    mpz_mul(pf->z[0], pf->z[0], r);
+    mpz_powm(pf->z[0], cipher_r, challenge, pk->n);
+    mpz_mul(pf->z[0], pf->z[0], t1);
     mpz_mod(pf->z[0], pf->z[0], pk->n);
 
-    mpz_clear(r);
-    mpz_clear(e);
-    mpz_clear(u);
-    mpz_clear(_0);
+    mpz_clear(t1);
+    mpz_clear(challenge);
 }
 
 int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
@@ -230,10 +249,9 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 {
     int retval = 0;
 
-    mpz_t t1, t2, e;
+    mpz_t t1, t2;
     mpz_init(t1);
     mpz_init(t2);
-    mpz_init(e);
 
     /* Ensure u, a, z are prime to n */
     mpz_gcd(t1, pf->u[0], pk->n);
@@ -250,8 +268,8 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     mpz_set_ui(t1, 0);
     pcs_t_encrypt_r(pk, t1, pf->z[0], t1);
-    mpz_ripemd_mpz_ul(e, pf->a[0], id);
-    mpz_powm(t2, pf->u[0], e, pk->n2);
+    mpz_ripemd_mpz_ul(pf->e[0], pf->a[0], id);
+    mpz_powm(t2, pf->u[0], pf->e[0], pk->n2);
     mpz_mul(t2, t2, pf->a[0]);
     mpz_mod(t2, t2, pk->n2);
 
@@ -264,7 +282,6 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 failure:
     mpz_clear(t1);
     mpz_clear(t2);
-    mpz_clear(e);
 
     return retval;
 }
@@ -289,7 +306,7 @@ void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
     }
 
     /* Calculate proof */
-    int choice = nth_power ? 0 : 1;
+    int choice = nth_power == pf->m1 ? 0 : 1;
     mpz_t r_hiding, t1, t2;
     mpz_init(r_hiding);
     mpz_init(t1);
@@ -336,7 +353,7 @@ void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
 }
 
 int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
-        unsigned long nth_power, unsigned long id)
+        mpz_t cipher, unsigned long id)
 {
     int retval = 0;
 
@@ -357,7 +374,7 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
         goto failure;
 
     mpz_invert(encrypt_value, pk->g, pk->n2);
-    mpz_mul_ui(t1, encrypt_value, nth_power);
+    mpz_mul(t1, cipher, encrypt_value);
     mpz_powm(t1, t1, pf->e[0], pk->n2);
     mpz_mul(t1, t1, pf->a[0]);
     mpz_mod(t1, t1, pk->n2);
@@ -369,7 +386,7 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
     mpz_mul(encrypt_value, pk->n, pf->generator);
     mpz_add_ui(encrypt_value, encrypt_value, 1);
     mpz_invert(encrypt_value, encrypt_value, pk->n2);
-    mpz_mul_ui(t1, encrypt_value, nth_power);
+    mpz_mul(t1, cipher, encrypt_value);
     mpz_powm(t1, t1, pf->e[1], pk->n2);
     mpz_mul(t1, t1, pf->a[1]);
     mpz_mod(t1, t1, pk->n2);
@@ -645,7 +662,10 @@ int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json)
     return 0;
 }
 
-int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json);
+int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json)
+{
+    return 0;
+}
 
 int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
 {
@@ -667,29 +687,38 @@ int main(void) {
 
     pcs_t_generate_key_pair(pk, vk, hr, 128, 2, 4);
 
-    mpz_t u, v, _0;
-    mpz_inits(u, v, _0, NULL);
-    mpz_set_ui(_0, 97); // Any value k * n for integer k will work
-
-    //mpz_mul_ui(_0, _0, 7);  // Altering this value will not make the proof wrong
+    mpz_t cipher, cipher_r, t1;
+    mpz_init(cipher);
+    mpz_init(cipher_r);
+    mpz_init(t1);
 
     unsigned long id = 0x5341515;
 
+    pcs_t_proof *pf = pcs_t_init_proof();
+
     // If we have some n^th power, i.e. 1 = n^0, then we can transform the
     // value into an encryption of 0 by multiplying the ciphertext by
-    pcs_t_r_encrypt(pk, hr, v, u, _0);
+    //pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
 
-    pcs_t_proof *pf = pcs_t_init_proof();
-    pcs_t_set_proof(pf, 0, 1);
+    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
+#if 0
+    mpz_random_in_mult_group(cipher_r, hr->rstate, pk->n2);
+    mpz_set_ui(cipher, 97);//pf->generator);
+    mpz_mul(cipher, pk->n, cipher);
+    mpz_add_ui(cipher, cipher, 1);
+    mpz_powm(t1, cipher_r, pk->n, pk->n2);
+    mpz_mul(cipher, cipher, t1);
+    mpz_mod(cipher, cipher, pk->n2);
+#endif
 
-    pcs_t_compute_1of2_ns_protocol(pk, hr, pf, v, u, 1, id); // checking if u
+    pcs_t_compute_1of2_ns_protocol(pk, hr, pf, cipher, cipher_r, 1, id); // checking if u
     // is an encryption of 0
 
-    if (pcs_t_verify_1of2_ns_protocol(pk, pf, v, id)) {
-        gmp_printf("%Zd is an encryption either 97^0 or 97^1\n", v);
+    if (pcs_t_verify_1of2_ns_protocol(pk, pf, cipher, id)) {
+        gmp_printf("%Zd is an encryption either 97^0 or 97^1\n", cipher);
     }
     else {
-        gmp_printf("%Zd is not an encryption none of 97^0 or 97^1\n", v);
+        gmp_printf("%Zd is not an encryption none of 97^0 or 97^1\n", cipher);
     }
 }
 #endif

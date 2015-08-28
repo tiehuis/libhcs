@@ -624,8 +624,10 @@ char *pcs_t_export_public_key(pcs_t_public_key *pk)
     return retstr;
 }
 
+// TODO: IMPLEMENT
 char *pcs_t_export_verify_values(pcs_t_private_key *vk)
 {
+    (void) vk;
     return "";
 }
 
@@ -662,8 +664,11 @@ int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json)
     return 0;
 }
 
+// TODO: IMPLEMENT
 int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json)
 {
+    (void) json;
+    (void) vk;
     return 0;
 }
 

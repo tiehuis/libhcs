@@ -154,6 +154,7 @@ static void ripemd160_wipe(ripemd160_state *self)
     self->magic = 0;
 }
 
+#ifdef HCS_BIG_ENDIAN
 static inline void byteswap32(uint32_t *v)
 {
     union { uint32_t w; uint8_t b[4]; } x, y;
@@ -180,6 +181,7 @@ static inline void byteswap_digest(uint32_t *p)
         byteswap32(p++);
     }
 }
+#endif
 
 /* The RIPEMD160 compression function.  Operates on self->buf */
 static void ripemd160_compress(ripemd160_state *self)

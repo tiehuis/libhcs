@@ -66,7 +66,7 @@ int mpz_seed(mpz_t seed, int bits)
         return HCS_EREAD;
 
     mpz_import(seed, bytes, 1, sizeof(random_bytes[0]), 0, 0, random_bytes);
-    //memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
+    memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
     fclose(fd);
 
 #elif defined(_WIN32)
@@ -114,6 +114,10 @@ void mpz_random_in_mult_group(mpz_t rop, gmp_randstate_t rstate, mpz_t op)
     mpz_clear(t1);
 }
 
+// TODO: This is uneeded until generator_g_compute is implemented. This is
+// also only an alternative to generator_gd_compute, and may not be implemented
+// at all.
+#if 0
 static void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t bitcnt)
 {
     /* This function generates a value, pi, which minimizes the ratio
@@ -141,6 +145,7 @@ static void generator_g_precompute(mpz_t pi, mpz_t t, mpz_t theta, mp_bitcnt_t b
     mpz_mul_ui(t, p, 2);
     mpz_clear(p);
 }
+#endif
 
 static void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
         mp_bitcnt_t bitcnt)
@@ -182,10 +187,13 @@ static void generator_gd_precompute(mpz_t pi, mpz_t nu, mpz_t lambda, mpz_t rho,
     mpz_clear(t);
 }
 
+// TODO: IMPLEMENT
+#if 0
 static void generator_g_compute(mpz_t rop, mpz_t pi, mpz_t lambda,
         gmp_randstate_t rstate, mp_bitcnt_t bitcnt)
 {
 }
+#endif
 
 /* We should call a function which precomputes these values and then
  * pass them to this function ideally to avoid excessive computation */

@@ -32,13 +32,13 @@ extern "C" {
  * variants, and even the single value versions.
  */
 typedef struct {
-    mpz_t e[2];
-    mpz_t u[2];
-    mpz_t a[2];
-    mpz_t z[2];
-    unsigned long m1;
-    unsigned long m2;
-    mpz_t generator;
+    mpz_t e[2];         /**< Internal proof verification fields */
+    mpz_t u[2];         /**< Internal proof verification fields */
+    mpz_t a[2];         /**< Internal proof verification fields */
+    mpz_t z[2];         /**< Internal proof verification fields */
+    unsigned long m1;   /**< Value of first power for 1of2 protocol */
+    unsigned long m2;   /**< Value of second power for 1of2 protocol */
+    mpz_t generator;    /**< Value of generator (base) in 1of2 protocol */
 } pcs_t_proof;
 
 /**
@@ -472,7 +472,7 @@ char *pcs_t_export_public_key(pcs_t_public_key *pk);
 char *pcs_t_export_auth_server(pcs_t_auth_server *au);
 
 /**
- * Import an auth server from a json string. Th format of the json string
+ * Import an auth server from a json string. The format of the json string
  * must match that of the corresponding import function.
  *
  * @param au A pointer to an initialised pcs_t_auth_server
@@ -481,8 +481,33 @@ char *pcs_t_export_auth_server(pcs_t_auth_server *au);
  */
 int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json);
 
+/**
+ * Export an array of verification values corresponding to each server as
+ * a json array. This is seperate from the private key export function as it
+ * may not always be wanted.
+ *
+ * @warning Unimplemented
+ *
+ * @todo This function will eventually be altered so that the verification
+ * values are stored in a pcs_t_public_key.
+ *
+ * @param vk A pointer to an initialised pcs_t_private_key
+ * @return json A null-terminated json string containing all server
+ *              verification data. NULL is returned on case of parse error.
+ */
 char *pcs_t_export_verify_values(pcs_t_private_key *vk);
 
+/**
+ * Import an array of verification values stored in a json string. The format
+ * should matched that produced by pcs_t_export_verify_values.
+ *
+ * @warning Unimplemented
+ *
+ * @todo As with the export function
+ *
+ * @param vk A pointer to an initialised pcs_t_private_key
+ * @return non-zero on success and 0 on failure
+ */
 int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json);
 
 #ifdef __cplusplus

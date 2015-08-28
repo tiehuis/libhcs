@@ -8,7 +8,7 @@ int main(void)
 {
     egcs_public_key *pk = egcs_init_public_key();
     egcs_private_key *vk = egcs_init_private_key();
-    hcs_rand *hr = hcs_init_rand();
+    hcs_random *hr = hcs_init_rand();
     egcs_generate_key_pair(pk, vk, hr, 2048);
 
     egcs_cipher *ca = egcs_init_cipher(),

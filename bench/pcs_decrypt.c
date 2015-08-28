@@ -8,7 +8,7 @@ int main(void)
 {
     pcs_public_key *pk = pcs_init_public_key();
     pcs_private_key *vk = pcs_init_private_key();
-    hcs_rand *hr = hcs_init_rand();
+    hcs_random *hr = hcs_init_rand();
     pcs_generate_key_pair(pk, vk, hr, 2048);
 
     mpz_t a, b, c;

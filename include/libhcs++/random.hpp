@@ -4,30 +4,30 @@
  * C++ wrapper class for the hcs_random object.
  */
 
-#ifndef HCS_RAND_HPP
-#define HCS_RAND_HPP
+#ifndef HCS_RANDOM_HPP
+#define HCS_RANDOM_HPP
 
 #include "../libhcs/hcs_random.h"
 
 namespace hcs {
 
-class rand {
+class random {
 
 private:
     hcs_random *hr;
     int refcount;   // Counts the number of times this particular instance is counted
 
 public:
-    rand() : refcount(0) {
-        hr = hcs_init_rand();
+    random() : refcount(0) {
+        hr = hcs_init_random();
     }
 
-    ~rand() {
-        hcs_free_rand(hr);
+    ~random() {
+        hcs_free_random(hr);
     }
 
     int reseed() {
-        return hcs_reseed_rand(hr);
+        return hcs_reseed_random(hr);
     }
 
     void inc_refcount() {

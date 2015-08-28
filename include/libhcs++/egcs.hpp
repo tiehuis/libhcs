@@ -18,7 +18,7 @@
 
 #include <gmpxx.h>
 #include "../libhcs/egcs.h"
-#include "rand.hpp"
+#include "random.hpp"
 
 namespace hcs {
 namespace egcs {
@@ -55,10 +55,10 @@ class public_key {
 
 private:
     egcs_public_key *pk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    public_key(hcs::rand &hr_) {
+    public_key(hcs::random &hr_) {
         pk = egcs_init_public_key();
         hr = &hr_;
         hr->inc_refcount();
@@ -100,10 +100,10 @@ class private_key {
 
 private:
     egcs_private_key *vk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    private_key(hcs::rand &hr_) {
+    private_key(hcs::random &hr_) {
         vk = egcs_init_private_key();
         hr = &hr_;
         hr->inc_refcount();

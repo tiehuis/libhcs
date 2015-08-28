@@ -10,11 +10,11 @@
 #include <string.h>
 #include <gmpxx.h>
 #include "../libhcs/pcs.h"
-#include "rand.hpp"
+#include "random.hpp"
 
 /*
- * We do not manage the memory associated with an hcs::rand class here, and it
- * is up to the caller to ensure that the hcs::rand associated has the same
+ * We do not manage the memory associated with an hcs::random class here, and it
+ * is up to the caller to ensure that the hcs::random associated has the same
  * lifetime as the public/private key.
  */
 
@@ -25,10 +25,10 @@ class public_key {
 
 private:
     pcs_public_key *pk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    public_key(hcs::rand &hr_) {
+    public_key(hcs::random &hr_) {
         pk = pcs_init_public_key();
         hr = &hr_;
         hr->inc_refcount();
@@ -95,10 +95,10 @@ class private_key {
 
 private:
     pcs_private_key *vk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    private_key(hcs::rand &hr_) {
+    private_key(hcs::random &hr_) {
         vk = pcs_init_private_key();
         hr = &hr_;
         hr->inc_refcount();

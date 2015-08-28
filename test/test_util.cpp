@@ -1,12 +1,12 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <libhcs++/rand.hpp>
 #include <gmpxx.h>
+#include "../include/libhcs++/random.hpp"
 #include "../src/com/util.h"
 
 TEST_CASE( "Prime Generation accuracy" ) {
-    hcs::rand hr;
+    hcs::random hr;
     mpz_class a;
 
     internal_fast_random_prime(a.get_mpz_t(), hr.as_ptr()->rstate, 512);

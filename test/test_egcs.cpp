@@ -2,9 +2,9 @@
 #include "catch.hpp"
 
 #include <gmpxx.h>
-#include <libhcs++/egcs.hpp>
+#include "../include/libhcs++/egcs.hpp"
 
-static hcs::rand *hr;
+static hcs::random *hr;
 static hcs::egcs::public_key *pk;
 static hcs::egcs::private_key *vk;
 
@@ -46,7 +46,7 @@ TEST_CASE( "Encryption/Decryption") {
 
 int main(int argc, char *argv[])
 {
-    hr = new hcs::rand();
+    hr = new hcs::random();
     pk = new hcs::egcs::public_key(*hr);
     vk = new hcs::egcs::private_key(*hr);
     hcs::egcs::generate_key_pair(*pk, *vk, 512);

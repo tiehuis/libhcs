@@ -22,7 +22,7 @@
 #include <vector>
 #include <gmpxx.h>
 #include "../libhcs/pcs_t.h"
-#include "rand.hpp"
+#include "random.hpp"
 
 namespace hcs {
 namespace pcs_t {
@@ -31,10 +31,10 @@ class public_key {
 
 private:
     pcs_t_public_key *pk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    public_key(hcs::rand &hr_) {
+    public_key(hcs::random &hr_) {
         pk = pcs_t_init_public_key();
         hr = &hr_;
         hr->inc_refcount();
@@ -49,7 +49,7 @@ public:
         return pk;
     }
 
-    hcs::rand* get_rand() {
+    hcs::random* get_rand() {
         return hr;
     }
 
@@ -110,10 +110,10 @@ class private_key {
 
 private:
     pcs_t_private_key *vk;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
-    private_key(hcs::rand &hr_) {
+    private_key(hcs::random &hr_) {
         vk = pcs_t_init_private_key();
         hr = &hr_;
         hr->inc_refcount();
@@ -128,7 +128,7 @@ public:
         return vk;
     }
 
-    hcs::rand* get_rand() {
+    hcs::random* get_rand() {
         return hr;
     }
 
@@ -153,7 +153,7 @@ class polynomial {
 
 private:
     pcs_t_polynomial *px;
-    hcs::rand *hr;
+    hcs::random *hr;
 
 public:
     polynomial(hcs::pcs_t::private_key &pk) {
@@ -171,7 +171,7 @@ public:
         return px;
     }
 
-    hcs::rand* get_rand() {
+    hcs::random* get_rand() {
         return hr;
     }
 

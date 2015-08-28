@@ -2,9 +2,9 @@
 #include "catch.hpp"
 
 #include <gmpxx.h>
-#include <libhcs++/pcs.hpp>
+#include "../include/libhcs++/pcs.hpp"
 
-static hcs::rand *hr;
+static hcs::random *hr;
 static hcs::pcs::public_key *pk;
 static hcs::pcs::private_key *vk;
 
@@ -83,7 +83,7 @@ TEST_CASE( "Encryption/Decryption") {
 
 int main(int argc, char *argv[])
 {
-    hr = new hcs::rand();
+    hr = new hcs::random();
     pk = new hcs::pcs::public_key(*hr);
     vk = new hcs::pcs::private_key(*hr);
     hcs::pcs::generate_key_pair(*pk, *vk, 512);

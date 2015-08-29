@@ -27,8 +27,8 @@ extern "C" {
  * Ciphertext type for use in the ElGamal scheme.
  */
 typedef struct {
-    mpz_t c1;
-    mpz_t c2;
+    mpz_t c1;   /**< First value of egcs cipher */
+    mpz_t c2;   /**< Second value of egcs cipher */
 } egcs_cipher;
 
 /**
@@ -37,7 +37,7 @@ typedef struct {
 typedef struct {
     mpz_t g;    /**< Generator for the cyclic group */
     mpz_t q;    /**< Order of the cyclic group */
-    mpz_t h;    /**< g^x \in G */
+    mpz_t h;    /**< g^x in G */
 } egcs_public_key;
 
 /**
@@ -148,7 +148,7 @@ void egcs_free_cipher(egcs_cipher *ct);
  * Zero all memory associated with a egcs_public_key. This does not free the
  * memory, so the key is safe to use immediately after calling this.
  *
- * @param vk A pointer to an initialised egcs_public_key
+ * @param pk A pointer to an initialised egcs_public_key
  */
 void egcs_clear_public_key(egcs_public_key *pk);
 
@@ -163,7 +163,7 @@ void egcs_clear_private_key(egcs_private_key *vk);
 /**
  * Frees a egcs_public_key and all associated memory.
  *
- * @param vk A pointer to an initialised egcs_public_key
+ * @param pk A pointer to an initialised egcs_public_key
  */
 void egcs_free_public_key(egcs_public_key *pk);
 

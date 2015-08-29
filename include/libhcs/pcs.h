@@ -93,6 +93,7 @@ void pcs_generate_key_pair(pcs_public_key *pk, pcs_private_key *vk,
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised pcs_public_key
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
@@ -111,10 +112,11 @@ void pcs_encrypt(pcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1);
 void pcs_encrypt_r(pcs_public_key *pk, mpz_t rop, mpz_t plain1, mpz_t r);
 
 /**
- * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
- * encrypted value, @p rop, will retain the same value as @cipher1.
+ * Reencrypt an encrypted value @p op. Upon decryption, this newly
+ * encrypted value, @p rop, will retain the same value as @p op.
  *
  * @param pk A pointer to an initialised pcs_public_key
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
@@ -246,7 +248,7 @@ char* pcs_export_private_key(pcs_private_key *vk);
  * match the format given by the export functions.
  *
  * @param pk A pointer to an initialised pcs_public_key
- * @param string A string storing the contents of a public key
+ * @param json A string storing the contents of a public key
  * @return non-zero if success, else zero on format error
  */
 int pcs_import_public_key(pcs_public_key *pk, const char *json);
@@ -255,8 +257,8 @@ int pcs_import_public_key(pcs_public_key *pk, const char *json);
  * Import a private key from a string. The input string is expected to
  * match the format given by the export functions.
  *
- * @param pk A pointer to an initialised pcs_private_key
- * @param string A string storing the contents of a private key
+ * @param vk A pointer to an initialised pcs_private_key
+ * @param json A string storing the contents of a private key
  * @return non-zero if success, else zero on format error
  */
 int pcs_import_private_key(pcs_private_key *vk, const char *json);

@@ -79,8 +79,8 @@ typedef struct {
  * destroy this key as it will not be required again.
  */
 typedef struct {
-    unsigned long w;
-    unsigned long l;
+    unsigned long w; /**< The number of servers req to decrypt */
+    unsigned long l; /**< The number of decryption servers in total */
     mpz_t *vi;       /**< Verification values for the decryption servers */
     mpz_t v;         /**< Cyclic generator of squares in Z*n^2 */
     mpz_t d;         /**< d = 0 mod m and d = 1 mod n^2 */
@@ -184,9 +184,10 @@ void pcs_t_encrypt(pcs_t_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1
 
 /**
  * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
- * encrypted value, @p rop, will retain the same value as @cipher1.
+ * encrypted value, @p rop, will retain the same value as @p op.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
@@ -236,31 +237,34 @@ pcs_t_proof* pcs_t_init_proof(void);
 /**
  * Set a proof object's value to check for.
  *
- * @param pk A pointer to an initialised pcs_t_public_key
  * @param pf A pointer to an initialised pcs_t_proof object
- * @param r mpz_t value to set the proof to check for
+ * @param generator Value to set the generator of the proof
+ * @param m1 First power that this proof will allow
+ * @param m2 Second power that this proof will allow
  */
 void pcs_t_set_proof(pcs_t_proof *pf, mpz_t generator, unsigned long m1,
         unsigned long m2);
 
 /**
- * Compute a proof for a particular value u, and an @p id. @p u is the
- * encrypted value for which the proof is generated for, with @p v being the
- * random value used to generate it. @u and @v can be generated using the
- * pcs_t_r_encrypt function.
+ * Compute a proof for a particular value @p ciper_m, and an @p id. @p cipher_m
+ * is the encrypted value for which the proof is generated for, with @p cipher_r
+ * being the random value used to generate it. @p cipher_m and @p cipher_r
+ * can be generated using the pcs_t_r_encrypt function.
  *
  * The result of this function is a proof result stored in @p pf, which can be
- * queried to determine if @u is an encryption of an n'th power.
+ * queried to determine if @p cipher_m is an encryption of an n'th power.
  *
  * @param pk A pointer to an initialised pcs_t_public_key
  * @param hr A pointer to an initialised hcs_random object
  * @param pf A pointer to an initialised pcs_t_proof object
- * @param u mpz_t value to construct the proof for
- * @param v mpz_t value which was used to encrypt the plaintext @p u
- * @param id User id in the system. This can be discarded by using the value 0.
+ * @param cipher_m The encrypted value
+ * @param cipher_r The random r value used for this cipher text
+ * @param nth_power The power that this encrypted value represents
+ * @param id User id in the system. This can be discarded by using the value 0
  */
 void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
-        pcs_t_proof *pf, mpz_t cipher_m, mpz_t cipher_r, unsigned long nth_power, unsigned long id);
+        pcs_t_proof *pf, mpz_t cipher_m, mpz_t cipher_r, unsigned long nth_power,
+        unsigned long id);
 
 /**
  * Verify a proof and return whether it is an n'th power.
@@ -276,8 +280,10 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 /**
  * Compute the value for an n^s protocol, limited to 1 of 2 values.
  *
- * @todo Determine exactly what the @p c1 and @cr1 parameters refer to and how
- * best to retrieve them from a given value.
+ * @param pk A pointer to an initialised pcs_t_public_key
+ * @param pf A pointer to an initialised pcs_t_proof
+ * @param cipher Encrypted value that this proof is meant to verify
+ * @param id of the owner of this cipher text
  */
 int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
         mpz_t cipher, unsigned long id);
@@ -317,7 +323,7 @@ pcs_t_polynomial* pcs_t_init_polynomial(pcs_t_private_key *vk, hcs_random *hr);
  * pcs_t_init_polynomial function.
  *
  * @param vk A pointer to an initialised pcs_t_private_key
- * @param coeff A pointer to a list of coefficients of a polynomial
+ * @param px A pointer to a list of coefficients of a polynomial
  * @param rop mpz_t where the result is stored
  * @param x The value to calculate the polynomial at
  */
@@ -329,8 +335,7 @@ void pcs_t_compute_polynomial(pcs_t_private_key *vk, pcs_t_polynomial *px,
  * The same private key which was used to generate these values should be used
  * as an argument.
  *
- * @param vk A pointer to an initialised pcs_t_private_key
- * @param A pointer to a list of coefficients of a polynomial
+ * @param px A pointer to a pcs_t_polynomial
  */
 void pcs_t_free_polynomial(pcs_t_polynomial *px);
 
@@ -385,7 +390,7 @@ void pcs_t_share_decrypt(pcs_t_public_key *vk, pcs_t_auth_server *au,
  *
  * @param vk A pointer to an initialised pcs_t_private_key
  * @param rop mpz_t where the combined decrypted result is stored
- * @param c array of share values
+ * @param hs A pointer to an initialised hcs_shares
  */
 int pcs_t_share_combine(pcs_t_public_key *vk, mpz_t rop, hcs_shares *hs);
 
@@ -410,7 +415,7 @@ void pcs_t_clear_public_key(pcs_t_public_key *pk);
  * keys, only putting it into a state whereby they can be safely used to
  * generate new key values.
  *
- * @param pk A pointer to an initialised pcs_t_private_key
+ * @param vk A pointer to an initialised pcs_t_private_key
  */
 void pcs_t_clear_private_key(pcs_t_private_key *vk);
 
@@ -506,6 +511,7 @@ char *pcs_t_export_verify_values(pcs_t_private_key *vk);
  * @todo As with the export function
  *
  * @param vk A pointer to an initialised pcs_t_private_key
+ * @param json A null-terminated json string containing verification values
  * @return non-zero on success and 0 on failure
  */
 int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json);

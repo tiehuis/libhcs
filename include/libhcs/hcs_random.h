@@ -37,7 +37,7 @@ extern "C" {
  * wrapper around a gmp_randstate_t variable.
  */
 typedef struct {
-    gmp_randstate_t rstate;
+    gmp_randstate_t rstate; /**< gmp_randstate_t that is used internally */
 } hcs_random;
 
 /**
@@ -55,7 +55,7 @@ hcs_random* hcs_init_random(void);
  * \todo Potentially expand error codes so we can explain exactly what went
  * wrong to the caller. For now though, it is better than aborting.
  *
- * @param A pointer to an initialised hcs_random
+ * @param hr A pointer to an initialised hcs_random
  * @return non-zero on successful reseed, zero on failure
  */
 int hcs_reseed_random(hcs_random *hr);
@@ -63,7 +63,7 @@ int hcs_reseed_random(hcs_random *hr);
 /**
  * Frees a hcs_random and all associated memory.
  *
- * @param A pointer to an initliased hcs_random
+ * @param hr A pointer to an initliased hcs_random
  */
 void hcs_free_random(hcs_random *hr);
 

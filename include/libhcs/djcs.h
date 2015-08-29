@@ -87,16 +87,18 @@ int djcs_generate_key_pair(djcs_public_key *pk, djcs_private_key *vk,
  * Encrypt a value @p plain1, and set @p rop to the encrypted result.
  *
  * @param pk A pointer to an initialised djcs_public_key
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the encrypted result is stored
  * @param plain1 mpz_t to be encrypted
  */
 void djcs_encrypt(djcs_public_key *pk, hcs_random *hr, mpz_t rop, mpz_t plain1);
 
 /**
- * Reencrypt an encrypted value @p cipher1. Upon decryption, this newly
- * encrypted value, @p rop, will retain the same value as @cipher1.
+ * Reencrypt an encrypted value @p op. Upon decryption, this newly
+ * encrypted value, @p rop, will retain the same value as @p op.
  *
  * @param pk A pointer to an initialised djcs_public_key
+ * @param hr A pointer to an initialised hcs_random type
  * @param rop mpz_t where the newly encrypted value is stored
  * @param op mpz_t to be reencrypted
  */
@@ -159,7 +161,7 @@ void djcs_clear_public_key(djcs_public_key *pk);
  * keys, only putting it into a state whereby they can be safely used to
  * generate new key values.
  *
- * @param pk A pointer to an initialised djcs_private_key
+ * @param vk A pointer to an initialised djcs_private_key
  */
 void djcs_clear_private_key(djcs_private_key *vk);
 
@@ -220,7 +222,7 @@ char* djcs_export_private_key(djcs_private_key *vk);
  * match the format given by the export functions.
  *
  * @param pk A pointer to an initialised djcs_public_key
- * @param string A string storing the contents of a public key
+ * @param json A string storing the contents of a public key
  * @return non-zero if success, else zero on format error
  */
 int djcs_import_public_key(djcs_public_key *pk, const char *json);
@@ -229,8 +231,8 @@ int djcs_import_public_key(djcs_public_key *pk, const char *json);
  * Import a private key from a string. The input string is expected to
  * match the format given by the export functions.
  *
- * @param pk A pointer to an initialised djcs_private_key
- * @param string A string storing the contents of a private key
+ * @param vk A pointer to an initialised djcs_private_key
+ * @param json A string storing the contents of a private key
  * @return non-zero if success, else zero on format error
  */
 int djcs_import_private_key(djcs_private_key *vk, const char *json);

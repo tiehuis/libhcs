@@ -79,7 +79,7 @@ void hcs_toggle_flag(hcs_shares *hs, unsigned long index);
 /**
  * Test if the server given by @p index is to be counted.
  *
- * @hs A pointer to an initialised hcs_shares
+ * @param hs A pointer to an initialised hcs_shares
  * @param index Index of the server to clear
  * @return non-zero if flag is set, 0 otherwise
  */
@@ -88,7 +88,7 @@ int hcs_tst_flag(hcs_shares *hs, unsigned long index);
 /**
  * Frees a hcs_shares and all associated memory.
  *
- * @hs A pointer to an initialised hcs_shares
+ * @param hs A pointer to an initialised hcs_shares
  */
 void hcs_free_shares(hcs_shares *hs);
 

@@ -17,6 +17,7 @@
 
 /* If we are compiling with C11 support, we will have memset_s, otherwise
  * use this simple version instead. */
+#if 0
 #if __STDC_VERSION__ < 201112L
 static void memset_s(void *v, int c, size_t n)
 {
@@ -25,6 +26,7 @@ static void memset_s(void *v, int c, size_t n)
 }
 #else
 #include <string.h>
+#endif
 #endif
 
 /* Zero a single mpz_t variable. mpz_clear does not seem to be required
@@ -66,7 +68,7 @@ int mpz_seed(mpz_t seed, int bits)
         return HCS_EREAD;
 
     mpz_import(seed, bytes, 1, sizeof(random_bytes[0]), 0, 0, random_bytes);
-    memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
+    //memset_s(random_bytes, 0, bytes); /* Ensure we zero seed buffer data */
     fclose(fd);
 
 #elif defined(_WIN32)
@@ -85,7 +87,7 @@ int mpz_seed(mpz_t seed, int bits)
     }
 
     mpz_import(seed, bytes, 1, sizeof(pbBuffer[0]), 0, 0, pbBuffer);
-    memset_s(pbBuffer, 0, bytes); /* Ensure we zero seed buffer data */
+    //memset_s(pbBuffer, 0, bytes); /* Ensure we zero seed buffer data */
 
     if (!CryptReleaseContext(hCryptProv, 0)) {
         return HCS_EREAD;

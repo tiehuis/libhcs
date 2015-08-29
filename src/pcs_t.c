@@ -197,8 +197,6 @@ pcs_t_proof* pcs_t_init_proof(void)
 
     mpz_init(pf->e[0]);
     mpz_init(pf->e[1]);
-    mpz_init(pf->u[0]);
-    mpz_init(pf->u[1]);
     mpz_init(pf->a[0]);
     mpz_init(pf->a[1]);
     mpz_init(pf->z[0]);
@@ -228,7 +226,7 @@ void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
     mpz_init(challenge);
     mpz_init(t1);
 
-    mpz_set(pf->u[0], cipher);
+    mpz_set(pf->e[0], cipher);
 
     // Random r in Zn* and a = E(0, r)
     mpz_set_ui(t1, 0);
@@ -254,7 +252,7 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
     mpz_init(t2);
 
     /* Ensure u, a, z are prime to n */
-    mpz_gcd(t1, pf->u[0], pk->n);
+    mpz_gcd(t1, pf->e[0], pk->n);
     if (mpz_cmp_ui(t1, 1) != 0)
         goto failure;
 
@@ -269,7 +267,7 @@ int pcs_t_verify_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
     mpz_set_ui(t1, 0);
     pcs_t_encrypt_r(pk, t1, pf->z[0], t1);
     mpz_ripemd_mpz_ul(pf->e[0], pf->a[0], id);
-    mpz_powm(t2, pf->u[0], pf->e[0], pk->n2);
+    mpz_powm(t2, pf->e[0], pf->e[0], pk->n2);
     mpz_mul(t2, t2, pf->a[0]);
     mpz_mod(t2, t2, pk->n2);
 
@@ -337,8 +335,8 @@ void pcs_t_compute_1of2_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
 
     mpz_ui_pow_ui(t1, 2, HCS_HASH_SIZE);
     mpz_mod(t2, challenge, t1);
-    mpz_sub(t2, t2, pf->e[1-choice]);
-    mpz_mod(pf->e[choice], t2, t1);
+    mpz_sub(pf->e[choice], t2, pf->e[1-choice]);
+    mpz_mod(pf->e[choice], pf->e[choice], t1);
 
     mpz_powm(t2, cipher_r, pf->e[choice], pk->n2);
     mpz_mul(t2, t2, r_hiding);
@@ -370,8 +368,11 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
     mpz_add(esum, pf->e[0], pf->e[1]);
     mpz_mod(esum, esum, pk->n2);
 
-    if (mpz_cmp_ui(esum, 0) != 0)
-        goto failure;
+    /* Problem with esum */
+    gmp_printf("%Zd\n", esum);
+    //if (mpz_cmp_ui(esum, 0) != 0)
+    //    goto failure;
+    printf("First condition\n");
 
     mpz_invert(encrypt_value, pk->g, pk->n2);
     mpz_mul(t1, cipher, encrypt_value);
@@ -382,6 +383,7 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     if (mpz_cmp(t1, t2) != 0)
         goto failure;
+    printf("Second condition\n");
 
     mpz_mul(encrypt_value, pk->n, pf->generator);
     mpz_add_ui(encrypt_value, encrypt_value, 1);
@@ -394,6 +396,7 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     if (mpz_cmp(t1, t2) != 0)
         goto failure;
+    printf("Third condition\n");
 
     mpz_init(pow2);
     mpz_init(challenge);
@@ -417,7 +420,7 @@ failure:
 
 void pcs_t_free_proof(pcs_t_proof *pf)
 {
-    mpz_clears(pf->e[0], pf->e[1], pf->u[0], pf->u[1], pf->a[0], pf->a[1], pf->z[0], pf->z[1], pf->generator, NULL);
+    mpz_clears(pf->e[0], pf->e[1], pf->a[0], pf->a[1], pf->z[0], pf->z[1], pf->generator, NULL);
     free(pf);
 }
 
@@ -624,6 +627,49 @@ char *pcs_t_export_public_key(pcs_t_public_key *pk)
     return retstr;
 }
 
+char *pcs_t_export_proof(pcs_t_proof *pf)
+{
+    // Export all proof values
+    char *buffer;
+    char *retstr;
+
+    JSON_Value *root = json_value_init_object();
+    JSON_Object *obj = json_value_get_object(root);
+
+#define sz__(x)  mpz_sizeinbase(pf->x, HCS_INTERNAL_BASE)
+
+    const size_t buffer_len =
+        HCS_MAX2(HCS_MAX3(sz__(e[0]), sz__(e[1]), sz__(a[0])),
+            HCS_MAX3(sz__(a[1]), sz__(z[0]), sz__(z[1])));
+
+#undef sz__
+
+    buffer = malloc(buffer_len + 2);
+
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->e[0]);
+    json_object_set_string(obj, "e1", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->e[1]);
+    json_object_set_string(obj, "e2", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->a[0]);
+    json_object_set_string(obj, "a1", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->a[1]);
+    json_object_set_string(obj, "a2", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->z[0]);
+    json_object_set_string(obj, "z1", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->z[1]);
+    json_object_set_string(obj, "z2", buffer);
+    mpz_get_str(buffer, HCS_INTERNAL_BASE, pf->generator);
+    json_object_set_string(obj, "generator", buffer);
+
+    json_object_set_number(obj, "m1", pf->m1);
+    json_object_set_number(obj, "m2", pf->m2);
+    retstr = json_serialize_to_string(root);
+
+    json_value_free(root);
+    free(buffer);
+    return retstr;
+}
+
 // TODO: IMPLEMENT
 char *pcs_t_export_verify_values(pcs_t_private_key *vk)
 {
@@ -664,6 +710,23 @@ int pcs_t_import_public_key(pcs_t_public_key *pk, const char *json)
     return 0;
 }
 
+int pcs_t_import_proof(pcs_t_proof *pf, const char *json)
+{
+    JSON_Value *root = json_parse_string(json);
+    JSON_Object *obj = json_value_get_object(root);
+    mpz_set_str(pf->e[0], json_object_get_string(obj, "e1"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->e[1], json_object_get_string(obj, "e1"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->a[0], json_object_get_string(obj, "a1"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->a[1], json_object_get_string(obj, "a2"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->z[0], json_object_get_string(obj, "z1"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->z[1], json_object_get_string(obj, "z2"), HCS_INTERNAL_BASE);
+    mpz_set_str(pf->generator, json_object_get_string(obj, "generator"), HCS_INTERNAL_BASE);
+    pf->m1 = json_object_get_number(obj, "m1");
+    pf->m2 = json_object_get_number(obj, "m2");
+
+    return 0;
+}
+
 // TODO: IMPLEMENT
 int pcs_t_import_verify_values(pcs_t_private_key *vk, const char *json)
 {
@@ -688,7 +751,7 @@ int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
 int main(void) {
     pcs_t_private_key *vk = pcs_t_init_private_key();
     pcs_t_public_key *pk = pcs_t_init_public_key();
-    hcs_random *hr = hcs_init_rand();
+    hcs_random *hr = hcs_init_random();
 
     pcs_t_generate_key_pair(pk, vk, hr, 128, 2, 4);
 
@@ -705,10 +768,13 @@ int main(void) {
     // value into an encryption of 0 by multiplying the ciphertext by
     //pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
 
-    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
-#if 0
+#if 1
+    mpz_set(t1, pf->generator);
+    //mpz_mul(t1, t1, pf->generator);
+    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, t1);
+#else
     mpz_random_in_mult_group(cipher_r, hr->rstate, pk->n2);
-    mpz_set_ui(cipher, 97);//pf->generator);
+    mpz_set(cipher, pf->generator);
     mpz_mul(cipher, pk->n, cipher);
     mpz_add_ui(cipher, cipher, 1);
     mpz_powm(t1, cipher_r, pk->n, pk->n2);
@@ -720,10 +786,12 @@ int main(void) {
     // is an encryption of 0
 
     if (pcs_t_verify_1of2_ns_protocol(pk, pf, cipher, id)) {
-        gmp_printf("%Zd is an encryption either 97^0 or 97^1\n", cipher);
+        gmp_printf("%Zd is an encryption of either 97^0 or 97^1\n", cipher);
     }
     else {
         gmp_printf("%Zd is not an encryption none of 97^0 or 97^1\n", cipher);
     }
+
+    printf("%s\n", pcs_t_export_proof(pf));
 }
 #endif

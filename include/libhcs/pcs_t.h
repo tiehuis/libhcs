@@ -33,7 +33,6 @@ extern "C" {
  */
 typedef struct {
     mpz_t e[2];         /**< Internal proof verification fields */
-    mpz_t u[2];         /**< Internal proof verification fields */
     mpz_t a[2];         /**< Internal proof verification fields */
     mpz_t z[2];         /**< Internal proof verification fields */
     unsigned long m1;   /**< Value of first power for 1of2 protocol */

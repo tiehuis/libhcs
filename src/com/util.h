@@ -22,6 +22,10 @@ extern "C" {
 
 #define HCS_INTERNAL_BASE 62
 
+#define HCS_MAX2(x,y) ((x) > (y) ? (x) : (y))
+#define HCS_MAX3(x,y,z) HCS_MAX2(HCS_MAX2(x, y), z)
+#define HCS_MAX4(w,x,y,z) HCS_MAX2(HCS_MAX3(w, x, y), z)
+
 /**
  * Zeroes a all memory allocated to a mpz_t @p op.
  */

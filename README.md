@@ -133,6 +133,11 @@ possible attacks on these algorithms should also be considered (see
 
 ### Future work (Improvements)
 
+* Getting this to work on other systems i.e. Windows would be useful. The main
+wall in this is getting GMP working first. CMake should make the rest simple,
+and the only platform-specific code (random state seeding) is mostly in place
+already.
+* Ensuring the code is cryptographically secure against attacks.
 * Further work done on other schemes. i.e (El-Gamal, Goldwasser-Micali)
 * More unit tests written to ensure the schemes themselves are correct
 * Profiling to determine particular performance improvements

@@ -1,0 +1,8 @@
+This is a list of current things that potentially may be worthwhile to do:
+
+  - Profile initialize of mpz_t variables in functions. If it has a noticeable
+    impact, we could assign a number of mpz_t variables and consistently use
+    those. This could be done with a gcc extension __attribute__((constructor))
+    to avoid a call to some global init function. This would enforce using
+    clang or gcc, but we could always fall back to in function initialization
+    at worst case.

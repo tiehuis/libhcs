@@ -365,14 +365,12 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     mpz_ui_pow_ui(pow2, 2, HCS_HASH_SIZE);
     mpz_ripemd_3mpz_ul(challenge, pk->n, pf->a[0], pf->a[1], id);
+    mpz_mod(challenge, challenge, pow2);
     mpz_add(esum, pf->e[0], pf->e[1]);
-    mpz_mod(esum, esum, pk->n2);
+    mpz_mod(esum, esum, pow2);
 
-    /* Problem with esum */
-    gmp_printf("%Zd\n", esum);
-    //if (mpz_cmp_ui(esum, 0) != 0)
-    //    goto failure;
-    printf("First condition\n");
+    if (mpz_cmp(esum, challenge) != 0)
+        goto failure;
 
     mpz_invert(encrypt_value, pk->g, pk->n2);
     mpz_mul(t1, cipher, encrypt_value);
@@ -383,7 +381,6 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     if (mpz_cmp(t1, t2) != 0)
         goto failure;
-    printf("Second condition\n");
 
     mpz_mul(encrypt_value, pk->n, pf->generator);
     mpz_add_ui(encrypt_value, encrypt_value, 1);
@@ -396,7 +393,6 @@ int pcs_t_verify_1of2_ns_protocol(pcs_t_public_key *pk, pcs_t_proof *pf,
 
     if (mpz_cmp(t1, t2) != 0)
         goto failure;
-    printf("Third condition\n");
 
     mpz_init(pow2);
     mpz_init(challenge);
@@ -769,9 +765,7 @@ int main(void) {
     //pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
 
 #if 1
-    mpz_set(t1, pf->generator);
-    //mpz_mul(t1, t1, pf->generator);
-    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, t1);
+    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
 #else
     mpz_random_in_mult_group(cipher_r, hr->rstate, pk->n2);
     mpz_set(cipher, pf->generator);
@@ -791,7 +785,5 @@ int main(void) {
     else {
         gmp_printf("%Zd is not an encryption none of 97^0 or 97^1\n", cipher);
     }
-
-    printf("%s\n", pcs_t_export_proof(pf));
 }
 #endif

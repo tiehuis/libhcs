@@ -92,8 +92,9 @@ int hcs_tst_flag(hcs_shares *hs, unsigned long index);
  */
 void hcs_free_shares(hcs_shares *hs);
 
-#endif
-
 #ifdef __cplusplus
 }
 #endif
+
+#endif
+

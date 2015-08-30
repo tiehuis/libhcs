@@ -486,6 +486,25 @@ char *pcs_t_export_auth_server(pcs_t_auth_server *au);
 int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json);
 
 /**
+ * Export a proof as a json string. This function allocates memory and it is
+ * up to the caller to free it accordingly.
+ *
+ * @param pf A pointer to an initialised pcs_t_proof
+ * @return A null-terminated json string
+ */
+char *pcs_t_export_proof(pcs_t_proof *pf);
+
+/**
+ * Import pcs_t_proof data from a json string. The format of the json string
+ * must match that of the corresponding import function.
+ *
+ * @param pf A pointer to an initialised pcs_t_proof
+ * @param json A null-terminated json string containing pcs_t_proof data
+ * @return 0 on success, non-zero on parse failure
+ */
+int pcs_t_import_proof(pcs_t_proof *pf, const char *json);
+
+/**
  * Export an array of verification values corresponding to each server as
  * a json array. This is seperate from the private key export function as it
  * may not always be wanted.

@@ -15,6 +15,8 @@ tests at this stage.
 In particular, we focus on the Threshold Variant of the Paillier
 cryptosystem.
 
+The auto-generated documentation can be found [here](tiehuis.github.io/libhcs).
+
 ## Dependencies
 
 There is a dependency on the [GMP](https://gmplib.org/) library. This also

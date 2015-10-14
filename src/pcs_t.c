@@ -118,8 +118,8 @@ void pcs_t_r_encrypt(pcs_t_public_key *pk, hcs_random *hr,
     mpz_init(t1);
 
     mpz_random_in_mult_group(r, hr->rstate, pk->n);
-    mpz_powm(rop, r, pk->n, pk->n2);
     mpz_powm(t1, pk->g, plain1, pk->n2);
+    mpz_powm(rop, r, pk->n, pk->n2);
     mpz_mul(rop, rop, t1);
     mpz_mod(rop, rop, pk->n2);
 
@@ -234,9 +234,9 @@ void pcs_t_compute_ns_protocol(pcs_t_public_key *pk, hcs_random *hr,
 
     mpz_ripemd_mpz_ul(challenge, pf->a[0], id);
 
-    mpz_powm(pf->z[0], cipher_r, challenge, pk->n);
+    mpz_powm(pf->z[0], cipher_r, challenge, pk->n2);
     mpz_mul(pf->z[0], pf->z[0], t1);
-    mpz_mod(pf->z[0], pf->z[0], pk->n);
+    mpz_mod(pf->z[0], pf->z[0], pk->n2);
 
     mpz_clear(t1);
     mpz_clear(challenge);
@@ -744,7 +744,7 @@ int pcs_t_import_auth_server(pcs_t_auth_server *au, const char *json)
 }
 
 #ifdef MAIN
-int main(void) {
+int main(int argc, char **argv) {
     pcs_t_private_key *vk = pcs_t_init_private_key();
     pcs_t_public_key *pk = pcs_t_init_public_key();
     hcs_random *hr = hcs_init_random();
@@ -757,27 +757,14 @@ int main(void) {
     mpz_init(t1);
 
     unsigned long id = 0x5341515;
+    int pow = atoi(argv[1]);
 
     pcs_t_proof *pf = pcs_t_init_proof();
 
-    // If we have some n^th power, i.e. 1 = n^0, then we can transform the
-    // value into an encryption of 0 by multiplying the ciphertext by
-    //pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
+    mpz_pow_ui(t1, pf->generator, pow);
+    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, t1);
 
-#if 1
-    pcs_t_r_encrypt(pk, hr, cipher, cipher_r, pf->generator);
-#else
-    mpz_random_in_mult_group(cipher_r, hr->rstate, pk->n2);
-    mpz_set(cipher, pf->generator);
-    mpz_mul(cipher, pk->n, cipher);
-    mpz_add_ui(cipher, cipher, 1);
-    mpz_powm(t1, cipher_r, pk->n, pk->n2);
-    mpz_mul(cipher, cipher, t1);
-    mpz_mod(cipher, cipher, pk->n2);
-#endif
-
-    pcs_t_compute_1of2_ns_protocol(pk, hr, pf, cipher, cipher_r, 1, id); // checking if u
-    // is an encryption of 0
+    pcs_t_compute_1of2_ns_protocol(pk, hr, pf, cipher, cipher_r, pow, id);
 
     if (pcs_t_verify_1of2_ns_protocol(pk, pf, cipher, id)) {
         gmp_printf("%Zd is an encryption of either 97^0 or 97^1\n", cipher);

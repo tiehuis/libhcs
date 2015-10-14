@@ -273,10 +273,10 @@ void internal_naive_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rs
         mp_bitcnt_t bitcnt)
 {
     do {
-        internal_fast_random_prime(rop1, rstate, bitcnt);
-        mpz_sub_ui(rop2, rop1, 1);
-        mpz_divexact_ui(rop2, rop2, 2);
-    } while (mpz_probab_prime_p(rop2, 25) == 0);
+        internal_fast_random_prime(rop2, rstate, bitcnt / 2);
+        mpz_mul_ui(rop1, rop2, 2);
+        mpz_add_ui(rop1, rop1, 1);
+    } while (mpz_probab_prime_p(rop1, 25) == 0);
 }
 
 void internal_fast_random_safe_prime(mpz_t rop1, mpz_t rop2, gmp_randstate_t rstate,

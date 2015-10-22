@@ -1,6 +1,6 @@
 CC	 := gcc # gcc only has openmp support on test machine
 CARGS = -std=c99 ../src/hcs_random.c ../src/com/util.c ../src/com/parson.c \
-		../src/com/ripemd160.c -lgmp
+		../src/com/ripemd160.c -lgmp -Ofast -march=native
 
 all:
 

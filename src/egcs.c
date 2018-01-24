@@ -1,9 +1,7 @@
 /**
  * @file egcs.c
  *
- * The implemenation of the ElGamal cryptosystem.
- *
- * \todo Confirm that the functions in this scheme work as intended.
+ * An implemenation of the ElGamal cryptosystem.
  */
 
 #include <stdio.h>
@@ -101,7 +99,7 @@ void egcs_ee_mul(egcs_public_key *pk, egcs_cipher *rop, egcs_cipher *ct1,
     {
         #pragma omp section
         {
-            mpz_mul(rop->c1, ct1->c1, ct2->c2);
+            mpz_mul(rop->c1, ct1->c1, ct2->c1);
             mpz_mod(rop->c1, rop->c1, pk->q);
         }
         #pragma omp section
